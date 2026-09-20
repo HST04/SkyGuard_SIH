@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #080c14;
+  --foreground: #f8fafc;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(13, 20, 36, 0.68);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+}
+
+.glass-panel-interactive {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.35);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-interactive:hover {
+  background: rgba(22, 33, 58, 0.8);
+  border-color: rgba(6, 182, 212, 0.35);
+  box-shadow: 0 0 20px -5px rgba(6, 182, 212, 0.25);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glowing outlines */
+.glow-cyan {
+  box-shadow: 0 0 25px -4px rgba(6, 182, 212, 0.45);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.45);
+}
+
+.glow-rose {
+  box-shadow: 0 0 35px -2px rgba(244, 63, 94, 0.55);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 15, 26, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.4);
+}
+
+/* 3D Canvas Fill */
+.canvas-container {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  position: relative;
+  background: radial-gradient(circle at 50% 50%, #0d1628 0%, #060913 100%);
+}
+
+.canvas-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+}

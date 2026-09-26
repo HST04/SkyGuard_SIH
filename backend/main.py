@@ -7,16 +7,23 @@ from routers.telemetry import router as telemetry_router
 from routers.anomalies import router as anomalies_router
 from routers.simulator import router as simulator_router
 from simulator.edge_simulator import simulator
+from services.mqtt_subscriber import mqtt_subscriber
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Launch Edge Simulator background worker
-    print("[SkyGuard Core] Starting Virtual Edge Telemetry Simulator...")
-    simulator.start()
+    if settings.MQTT_ENABLED:
+        print("[SkyGuard Core] Starting MQTT telemetry subscriber...")
+        mqtt_subscriber.start()
+    else:
+        print("[SkyGuard Core] Starting Virtual Edge Telemetry Simulator...")
+        simulator.start()
     yield
-    # Shutdown
-    print("[SkyGuard Core] Stopping Virtual Edge Telemetry Simulator...")
-    simulator.stop()
+    if settings.MQTT_ENABLED:
+        print("[SkyGuard Core] Stopping MQTT telemetry subscriber...")
+        mqtt_subscriber.stop()
+    else:
+        print("[SkyGuard Core] Stopping Virtual Edge Telemetry Simulator...")
+        simulator.stop()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -45,7 +52,8 @@ async def health_check():
         "status": "healthy",
         "service": settings.PROJECT_NAME,
         "station_id": settings.STATION_ID,
-        "edge_simulator_running": simulator.running
+        "edge_simulator_running": simulator.running,
+        "mqtt_enabled": settings.MQTT_ENABLED,
     }
 
 @app.get("/")

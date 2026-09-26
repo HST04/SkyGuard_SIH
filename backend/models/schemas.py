@@ -20,6 +20,9 @@ class TelemetryPayload(BaseModel):
     sequence: int
     source: str = "edge-simulator"
     drop_flag: int = 0
+    reconstruction_error: float = 0.0142
+    inference_time_ms: float = 2.4
+    live_attributions: List[ShapAttribution] = []
 
 class AnomalyEvent(BaseModel):
     anomaly_id: str
@@ -64,7 +67,8 @@ class FaultInjectionRequest(BaseModel):
         "stuck_humidity",
         "humidity_drift",
         "cross_decoupling",
-        "sensor_noise"
+        "sensor_noise",
+        "valid_squall"
     ]
     intensity: float = 1.0
     duration_seconds: int = 30

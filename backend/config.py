@@ -14,6 +14,15 @@ class Settings(BaseSettings):
     SAMPLING_INTERVAL_SEC: float = 1.0
     WINDOW_SIZE: int = 12
     RECONSTRUCTION_THRESHOLD: float = 0.042
+
+    # External MQTT edge ingestion. Disabled by default so the local simulator remains
+    # the zero-setup development path.
+    MQTT_ENABLED: bool = False
+    MQTT_BROKER_HOST: str = "localhost"
+    MQTT_BROKER_PORT: int = 1883
+    MQTT_TOPIC: str = "skyguard/telemetry"
+    MQTT_CLIENT_ID: str = "skyguard-backend"
+    MQTT_QOS: int = 1
     
     # CORS
     CORS_ORIGINS: List[str] = [

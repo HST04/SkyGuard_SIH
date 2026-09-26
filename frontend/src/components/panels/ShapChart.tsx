@@ -2,85 +2,146 @@
 
 import React from 'react';
 import { useTelemetryStore } from '@/stores/telemetryStore';
-import { BarChart3, HelpCircle, CheckCircle, AlertOctagon } from 'lucide-react';
+import { BarChart3, AlertOctagon, CheckCircle2 } from 'lucide-react';
+import { ShapAttribution } from '@/lib/types';
 
 export function ShapChart() {
-  const { activeAnomaly } = useTelemetryStore();
+  const { activeAnomaly, latestTelemetry } = useTelemetryStore();
 
-  if (!activeAnomaly || activeAnomaly.status !== 'open') {
-    return (
-      <div className="glass-panel rounded-2xl p-4 border border-white/10">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
-              SHAP Explainability & Latent Bottleneck
-            </h3>
-          </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
-            NOMINAL
-          </span>
-        </div>
+  const isAnomaly = activeAnomaly && activeAnomaly.status === 'open';
 
-        <div className="p-4 rounded-xl bg-slate-900/40 border border-white/5 flex items-center gap-3.5">
-          <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-          <div className="text-xs font-mono text-slate-300">
-            <div>1D-CNN Autoencoder latent bottleneck error is below operating threshold.</div>
-            <div className="text-slate-500 text-[11px] mt-0.5">
-              Current Reconstruction MSE: <strong>0.0142</strong> • Threshold: <strong>0.0420</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Dynamic attributions: prioritize anomaly attributions if active; otherwise use live baseline attributions
+  const attributions: ShapAttribution[] = React.useMemo(() => {
+    if (isAnomaly && activeAnomaly.shap_values && activeAnomaly.shap_values.length > 0) {
+      return activeAnomaly.shap_values;
+    }
 
-  const attributions = activeAnomaly.shap_values && activeAnomaly.shap_values.length > 0
-    ? activeAnomaly.shap_values
-    : [
-        { feature: activeAnomaly.culprit_sensors[0] || 'humidity', importance: 0.88, direction: 'positive' as const, message: 'Sensor output diverges from multivariate physics.' },
-        { feature: 'temperature', importance: 0.12, direction: 'negative' as const, message: 'Residual baseline variance.' },
-      ];
+    if (latestTelemetry?.live_attributions && latestTelemetry.live_attributions.length > 0) {
+      return latestTelemetry.live_attributions;
+    }
+
+    // Dynamic nominal fallback tied to live telemetry reading fluctuations
+    const t = latestTelemetry?.temperature_c ?? 32.0;
+    const rh = latestTelemetry?.humidity_pct ?? 58.0;
+    const p = latestTelemetry?.pressure_hpa ?? 1005.0;
+
+    // Small physical variations
+    const tFactor = Math.abs(t - 30.0) + 1.0;
+    const rhFactor = Math.abs(rh - 55.0) + 1.5;
+    const pFactor = Math.abs(p - 1005.0) * 2.0 + 0.8;
+    const sum = tFactor + rhFactor + pFactor;
+
+    return [
+      {
+        feature: 'humidity',
+        importance: Math.round((rhFactor / sum) * 100) / 100,
+        direction: rh > 55 ? 'positive' : 'negative',
+        message: 'Relative humidity within diurnal atmospheric bounds.',
+      },
+      {
+        feature: 'temperature',
+        importance: Math.round((tFactor / sum) * 100) / 100,
+        direction: t > 30 ? 'positive' : 'negative',
+        message: 'Thermal gradient tracking solar radiation cycle.',
+      },
+      {
+        feature: 'pressure',
+        importance: Math.round((pFactor / sum) * 100) / 100,
+        direction: 'negative',
+        message: 'Barometric tendency consistent with regional gradient.',
+      },
+    ];
+  }, [isAnomaly, activeAnomaly, latestTelemetry]);
+
+  const currentMse = isAnomaly
+    ? activeAnomaly.reconstruction_error
+    : (latestTelemetry?.reconstruction_error ?? 0.0142);
 
   return (
-    <div className="glass-panel rounded-2xl p-4 border border-rose-500/30 shadow-glow-rose/20">
+    <div
+      className={`glass-panel rounded-2xl p-4 border transition-all duration-300 ${
+        isAnomaly
+          ? 'border-rose-500/40 bg-rose-950/20 shadow-glow-rose/20'
+          : 'border-white/10 shadow-glass'
+      }`}
+    >
+      {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <AlertOctagon className="w-4 h-4 text-rose-400 animate-pulse" />
+          {isAnomaly ? (
+            <AlertOctagon className="w-4 h-4 text-rose-400 animate-pulse" />
+          ) : (
+            <BarChart3 className="w-4 h-4 text-cyan-400" />
+          )}
           <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
-            SHAP Attribution: Culprit Feature Breakdown
+            {isAnomaly
+              ? 'SHAP Attribution: Culprit Breakdown'
+              : 'SHAP Explainability (1 Hz Live)'}
           </h3>
         </div>
-        <div className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">
-          MSE: {activeAnomaly.reconstruction_error.toFixed(4)}
+
+        <div className="flex items-center gap-2">
+          {isAnomaly ? (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">
+              MSE: {currentMse.toFixed(4)}
+            </span>
+          ) : (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              NOMINAL
+            </span>
+          )}
         </div>
       </div>
 
       {/* Plain-English Diagnostic Message */}
-      <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/30 text-xs font-mono text-rose-200 mb-3">
-        <div className="font-semibold text-[11px] text-rose-300 uppercase tracking-wider mb-1">
-          Root-Cause Diagnostic
+      {isAnomaly ? (
+        <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/30 text-xs font-mono text-rose-200 mb-3 animate-in fade-in duration-200">
+          <div className="font-semibold text-[11px] text-rose-300 uppercase tracking-wider mb-1">
+            Root-Cause Diagnostic
+          </div>
+          {activeAnomaly.diagnostic_message}
         </div>
-        {activeAnomaly.diagnostic_message}
-      </div>
+      ) : (
+        <div className="p-2.5 rounded-xl bg-slate-900/40 border border-white/5 text-[11px] font-mono text-slate-400 mb-3 flex items-center justify-between">
+          <span>Multivariate sensor balance:</span>
+          <span className="text-slate-300 font-semibold">
+            Reconstruction MSE: {currentMse.toFixed(4)} &lt; 0.042
+          </span>
+        </div>
+      )}
 
       {/* Feature Attribution Horizontal Bars */}
       <div className="space-y-2.5">
         {attributions.map((attr, idx) => {
-          const pct = Math.min(100, Math.round(attr.importance * 100));
+          const pct = Math.min(100, Math.max(5, Math.round(attr.importance * 100)));
           const isTop = idx === 0;
 
           return (
             <div key={attr.feature} className="font-mono text-xs">
               <div className="flex items-center justify-between mb-1">
-                <span className={`font-semibold ${isTop ? 'text-rose-300' : 'text-slate-300'}`}>
+                <span
+                  className={`font-semibold ${
+                    isAnomaly && isTop
+                      ? 'text-rose-300'
+                      : 'text-slate-300'
+                  }`}
+                >
                   {attr.feature.toUpperCase()}
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-slate-400">
                     {attr.direction === 'positive' ? '+ Contribution' : '- Suppression'}
                   </span>
-                  <span className={`font-bold ${isTop ? 'text-rose-400' : 'text-slate-300'}`}>
+                  <span
+                    className={`font-bold ${
+                      isAnomaly && isTop
+                        ? 'text-rose-400'
+                        : isTop
+                        ? 'text-cyan-300'
+                        : 'text-slate-400'
+                    }`}
+                  >
                     {pct}%
                   </span>
                 </div>
@@ -89,8 +150,14 @@ export function ShapChart() {
               {/* Progress Track */}
               <div className="w-full h-2 rounded-full bg-slate-800/80 overflow-hidden border border-white/5">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    isTop ? 'bg-gradient-to-r from-amber-500 to-rose-500 shadow-glow-rose' : 'bg-cyan-500/70'
+                  className={`h-full rounded-full transition-all duration-700 ease-out ${
+                    isAnomaly && isTop
+                      ? 'bg-gradient-to-r from-amber-500 to-rose-500 shadow-glow-rose'
+                      : isAnomaly
+                      ? 'bg-rose-500/50'
+                      : isTop
+                      ? 'bg-gradient-to-r from-cyan-500 to-emerald-400 shadow-glow-cyan'
+                      : 'bg-cyan-500/50'
                   }`}
                   style={{ width: `${pct}%` }}
                 />

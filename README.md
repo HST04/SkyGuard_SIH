@@ -64,6 +64,38 @@ npm run dev
 ```
 *Dashboard will open at `http://localhost:3000`.*
 
+### 3. Optional two-laptop MQTT demo
+
+The default backend mode uses the built-in simulator. To use Laptop 1 as an
+external weather transmitter, start the demo MQTT broker from the repository
+root:
+
+```powershell
+docker compose up -d mqtt
+```
+
+Then start the backend with MQTT ingestion enabled:
+
+```powershell
+cd backend
+$env:MQTT_ENABLED="true"
+python main.py
+```
+
+On Laptop 1, install the transmitter dependency and point it at the backend
+machine:
+
+```powershell
+python -m pip install paho-mqtt
+python backend/simulator/client.py --host <BACKEND_PUBLIC_IP>
+```
+
+Press `1` for a heat spike, `2` for capacitive humidity drift, `3` for a
+severe thunderstorm, and `0` to return to normal. Port `1883` must be allowed
+through the backend machine's firewall/security group. This broker
+configuration is intentionally unauthenticated for a controlled demo network;
+do not expose it publicly without adding authentication and TLS.
+
 ---
 
 ## 🖥️ Screen Navigation

@@ -311,20 +311,37 @@ Create `backend/simulator/client.py` designed to run on Laptop 1 as our physical
 - [ ] *Done!*
 
 ### Step 17: Test Laptop 1 Sending Data to the Cloud
-1. On **Laptop 1**, open terminal and install the MQTT library:
+1. On the **cloud server**, from the project root, start the demo MQTT broker:
    ```powershell
-   pip install paho-mqtt
+   docker compose up -d mqtt
    ```
-2. Start transmitting to your Azure cloud server:
+   If the server uses a firewall or Azure network security group, allow inbound
+   TCP port `1883` in addition to the API port `8000`.
+2. On the cloud server, start the backend in external MQTT mode:
+   ```powershell
+   cd backend
+   $env:MQTT_ENABLED="true"
+   python main.py
+   ```
+   Confirm `http://<YOUR_PUBLIC_IP>:8000/health` reports
+   `"mqtt_enabled": true` and `"edge_simulator_running": false`.
+3. On **Laptop 1**, open PowerShell and install the MQTT library:
+   ```powershell
+   python -m pip install paho-mqtt
+   ```
+4. Start transmitting to your Azure cloud server:
    ```powershell
    python backend/simulator/client.py --host <YOUR_AZURE_PUBLIC_IP>
    ```
-3. **What you should see:** Every second, a new line prints:  
+5. **What you should see:** Every second, a new line prints:
    `[TX SEQ #1001] Station AGRA-01: Temp=31.2°C | Humidity=62.1% | Status=NORMAL`
-4. Press key `2` on your keyboard. You should see:  
+6. Press key `2` on your keyboard. You should see:
    `>>> FAULT INJECTED: CAPACITIVE DRIFT (+15% RH)`
-5. Press key `0`. You should see:  
+7. Press key `0`. You should see:
    `>>> RESET TO NORMAL`
+8. Press `1` to inject a heat spike or `3` to simulate a severe thunderstorm.
+The transmitter reconnects automatically if the broker temporarily disappears.
+Press `Ctrl+C` to stop it.
 - [ ] *Done!*
 
 ---

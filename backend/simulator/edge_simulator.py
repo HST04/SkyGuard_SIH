@@ -2,16 +2,15 @@ import asyncio
 import math
 import random
 import time
-import uuid
+
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
 from config import settings
 from data.store import store
-from models.schemas import TelemetryPayload, AnomalyEvent, ShapAttribution, PitchScriptStatus
-from services.rule_engine import IMDPhysicsRuleEngine, calculate_dew_point
-from services.anomaly_detector import anomaly_detector
-from services.sse_manager import sse_manager
+from models.schemas import TelemetryPayload, PitchScriptStatus
+from services.rule_engine import calculate_dew_point
+from services.telemetry_ingestion import telemetry_ingestion
 
 class EdgeTelemetrySimulator:
     def __init__(self):
@@ -119,40 +118,7 @@ class EdgeTelemetrySimulator:
                 
                 payload = self._generate_telemetry()
                 
-                # Check IMD physics rules (Stage 1)
-                recent_history = store.get_telemetry_history(limit=settings.WINDOW_SIZE)
-                rule_violation = IMDPhysicsRuleEngine.evaluate(payload, recent_history)
-                
-                detected_anomaly: Optional[AnomalyEvent] = None
-                
-                if rule_violation:
-                    detected_anomaly = AnomalyEvent(
-                        anomaly_id=f"rule-{uuid.uuid4().hex[:8]}",
-                        detected_at=payload.timestamp,
-                        station_id=self.station_id,
-                        anomaly_type="rule_flag",
-                        severity_score=rule_violation["severity"],
-                        culprit_sensors=rule_violation["culprit"],
-                        diagnostic_message=rule_violation["message"],
-                        shap_values=rule_violation["shap_attributions"],
-                        status="open",
-                        reconstruction_error=round(rule_violation["severity"] * 0.12, 4)
-                    )
-                else:
-                    # Physics rules passed: run Stage 2 multivariate anomaly detector
-                    window = recent_history + [payload]
-                    detected_anomaly = anomaly_detector.evaluate_window(window)
-
-                # Persist telemetry
-                store.add_telemetry(payload)
-
-                # Broadcast live telemetry over SSE
-                await sse_manager.broadcast("telemetry", payload.model_dump())
-
-                # If an anomaly occurred, record and broadcast
-                if detected_anomaly:
-                    store.add_anomaly(detected_anomaly)
-                    await sse_manager.broadcast("anomaly", detected_anomaly.model_dump())
+                await telemetry_ingestion.ingest(payload)
 
             except asyncio.CancelledError:
                 break
@@ -222,6 +188,12 @@ class EdgeTelemetrySimulator:
             temp += random.uniform(-3.5, 3.5)
             rh += random.uniform(-15.0, 15.0)
             press += random.uniform(-4.0, 4.0)
+        elif active_fault == "valid_squall":
+            # Natural Severe Thunderstorm: Pressure drops, humidity surges, temp drops (True Negative test)
+            temp -= (7.8 * intensity)
+            press -= (10.5 * intensity)
+            rh = min(96.0, rh + (32.0 * intensity))
+            wind += (9.5 * intensity)
 
         # Sanitize reasonable limits for raw calculations
         td = calculate_dew_point(temp, rh)

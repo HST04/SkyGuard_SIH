@@ -4,12 +4,13 @@ import React, { useState } from 'react';
 import { useSSE } from '@/hooks/useSSE';
 import { WeatherStation3D } from '@/components/twin/WeatherStation3D';
 import { TelemetryPanel } from '@/components/panels/TelemetryPanel';
+import { LiveMLPipelinePanel } from '@/components/panels/LiveMLPipelinePanel';
 import { ShapChart } from '@/components/panels/ShapChart';
 import { AnomalyList } from '@/components/panels/AnomalyList';
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import { useTelemetryStore } from '@/stores/telemetryStore';
 import { api } from '@/lib/api';
-import { Flame, TrendingUp, RotateCcw, Play, Zap, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Flame, TrendingUp, RotateCcw, Play, Zap, PanelRightClose, PanelRightOpen, CloudLightning } from 'lucide-react';
 
 export default function DashboardPage() {
   // Connect SSE real-time pipeline to Station AGRA-01
@@ -81,6 +82,19 @@ export default function DashboardPage() {
           </button>
 
           <button
+            onClick={() => handleQuickFault('valid_squall')}
+            className={`px-2 py-1 rounded-lg text-xs font-mono font-medium flex items-center gap-1 transition-all ${
+              activeFault === 'valid_squall'
+                ? 'bg-sky-500/30 text-sky-200 border border-sky-500/50 shadow-glow-cyan'
+                : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
+            }`}
+            title="Simulate Severe Thunderstorm (Squall Line True-Negative: -11 hPa, 94% RH)"
+          >
+            <CloudLightning className="w-3.5 h-3.5 text-sky-400" />
+            <span>Thunderstorm</span>
+          </button>
+
+          <button
             onClick={() => handleQuickFault('normal')}
             className="px-2 py-1 rounded-lg text-xs font-mono font-medium bg-white/5 hover:bg-white/10 border border-white/5 text-slate-300 flex items-center gap-1 transition-all"
             title="Reset to clean baseline"
@@ -135,6 +149,7 @@ export default function DashboardPage() {
             </button>
           </div>
           <TelemetryPanel />
+          <LiveMLPipelinePanel />
           <ShapChart />
           <AnomalyList />
           <TimeSeriesChart />
@@ -159,17 +174,22 @@ export default function DashboardPage() {
             <TelemetryPanel />
           </div>
 
-          {/* Section 2: SHAP Explainability Breakdown */}
+          {/* Section 2: Real-Time AI Error Meter (1D-CNN) */}
+          <div>
+            <LiveMLPipelinePanel />
+          </div>
+
+          {/* Section 3: SHAP Explainability Breakdown */}
           <div>
             <ShapChart />
           </div>
 
-          {/* Section 3: Active Anomaly Triage & Feedback Loop */}
+          {/* Section 4: Active Anomaly Triage & Feedback Loop */}
           <div>
             <AnomalyList />
           </div>
 
-          {/* Section 4: Real-Time Multivariate Telemetry Graph */}
+          {/* Section 5: Real-Time Multivariate Telemetry Graph */}
           <div>
             <TimeSeriesChart />
           </div>

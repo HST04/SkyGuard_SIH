@@ -1,597 +1,431 @@
 ---
-title: End-to-End System Architecture
-subtitle: Real-Time 3D Digital Twin for Environmental Telemetry Anomaly Detection
-version: 1.0
-date: 2026-09-16
+title: SkyGuard AI — Split-Edge/Cloud Anomaly Detection Architecture
+subtitle: Three-Layer Autonomous Telemetry Quality Assurance, Dual-Model Confluence, and Predictive Maintenance
+version: 2.0
+date: 2026-09-27
 tags:
   - architecture
+  - split-architecture
+  - edge-computing
+  - esp32
+  - tflite-micro
   - mqtt
   - fastapi
-  - supabase
-  - nextjs
+  - dual-model
+  - classification-confluence
+  - explainable-ai
+  - shap
+  - predictive-maintenance
+  - imputation
   - digital-twin
-  - anomaly-detection
-  - edge-simulation
 ---
 
-# End-to-End System Architecture
+# SkyGuard AI: Split-Edge/Cloud Anomaly Detection Architecture
 
-> A purpose-built, free-tier-friendly architecture for demonstrating real-time environmental telemetry, physics-based validation, AI anomaly detection, explainability, and a clickable 3D digital twin.
-
----
-
-## 1. Executive Summary
-
-This system ingests synthetic environmental telemetry from a Python edge simulator, routes it through MQTT, validates it against IMD-inspired physics rules, runs a 1D-CNN autoencoder to detect deviations from learned normal behavior, explains high-error anomalies with SHAP, stores telemetry and anomaly logs in Supabase PostgreSQL, and streams updates to a Next.js 3D digital twin via Server-Sent Events.
-
-The architecture is optimized for:
-
-- **Live demo impact** — non-technical judges can click a 3D station and immediately see sensor status, anomaly severity, and culprit sensors.
-- **Technical depth** — combines MQTT, FastAPI, physics rules, deep learning, explainable AI, PostgreSQL time-series storage, SSE, and React Three Fiber.
-- **Zero/low cost** — Python simulation, Dockerized Mosquitto, FastAPI on a friend’s Azure VM, Supabase free tier, and Vercel hobby deployment.
-- **Competitive internship signal** — demonstrates end-to-end system design, real-time data engineering, ML deployment, and frontend visualization.
+> A production-grade, split-architecture system designed for Automatic Weather Stations (AWS). By pairing ultra-low-power edge filtering (ESP32 / TFLite Micro) with cloud-scale multivariate deep learning (Dual-Model Classification Confluence), Explainable AI (SHAP), Predictive Maintenance, and Imputation, SkyGuard AI prevents telemetry corruption, eliminates alert fatigue, and guarantees operational integrity without requiring unavailable real-world defect datasets.
 
 ---
 
-## 2. High-Level Architecture
+## 1. Executive Summary & Design Principles
+
+Deploying an end-to-end Machine Learning pipeline on real-world Automatic Weather Stations requires overcoming severe computational and physical constraints: an edge microcontroller like the ESP32 cannot run heavy dual-agent LLMs or full deep learning architectures due to strict memory (RAM/Flash) and power limits. Furthermore, in production meteorology, dedicated labeled datasets of physical sensor defects across multi-parameter weather arrays are non-existent.
+
+SkyGuard AI resolves these bottlenecks through **three foundational design principles**:
+
+1. **Split-Architecture Deployment (Edge ↔ Cloud)**: 
+   The front line operates on an ultra-low-power microcontroller (ESP32) performing rapid, two-stage local filtering: zero-cost deterministic IMD physical limit checks and quantized micro outlier detection (Quantized PyOD / TFLite Micro). Nominal data is recorded locally; only anomalous events trigger an uplink burst containing the incident reading along with a multi-hour contextual sliding window. This reduces wireless bandwidth usage by >90% while keeping cloud compute focused solely on ambiguous anomalies.
+2. **Structured Reasoning via Classification Confluence**: 
+   Rather than relying on non-deterministic LLM agent dialogues, SkyGuard AI formalizes multi-agent reasoning into a rigorous **Classification Confluence Matrix**:
+   - **Model A (Weather Classifier)**: Trained on meteorological event signatures (severe storms, frontal passages, squall lines, diurnal swings).
+   - **Model B (Sensor Defect Classifier)**: Specially trained on synthetically injected sensor failure archetypes (frozen flatlines, random impulse spikes, high-frequency Gaussian noise, calibration drift, packet dropouts) to circumvent the lack of real defect data.
+   - **Confluence Engine**: A deterministic confidence-scoring matrix evaluates Model A and Model B in tandem, producing definitive alert classifications with mathematically sound confidence metrics ($0-100\%$).
+3. **Full-Cycle Telemetry Health (Predictive Maintenance & Imputation)**:
+   Beyond binary alerting, the architecture completes the full data-quality lifecycle:
+   - **Explainable AI (XAI) Hub**: Quantifies feature attributions via SHAP bar charts alongside natural-language diagnostic justifications.
+   - **Sensor Health & Predictive Maintenance (3.4)**: Monitors long-term temporal drift to forecast sensor recalibration weeks before total breakdown occurs.
+   - **Imputation & Correction Module (3.5)**: When a sensor defect is confirmed, a multivariate regression / LSTM model reconstructs the corrupted parameter using healthy cross-correlated channels.
+
+---
+
+## 2. High-Level Architecture Diagram
+
+The system is structured into three discrete layers: **1.0 Edge Device Layer**, **2.0 Cloud Analytics Layer**, and **3.0 Visualization & Alerting Layer**.
 
 ```mermaid
-graph TD
-    A[Python Edge Simulator] -->|MQTT / JSON| B(Mosquitto Broker)
-    B --> C[FastAPI Backend]
-    C --> D{IMD Physics Rules}
-    D -->|Pass| E[1D-CNN Autoencoder]
-    E -->|High Error| F[SHAP Explainer]
-    D -->|Fail| G[Rule Flag]
-    F --> H[(Supabase PostgreSQL)]
-    G --> H
-    H -->|SSE Stream| I[Next.js 3D Digital Twin]
+flowchart TD
+    subgraph L1["1.0 Edge Device Layer (ESP32 Deployment)"]
+        SENS["Sensors (T, P, RH)"] --> R11["1.1 IMD Plausibility Check (Logical Filter)"]
+        R11 -->|Pass Range| ML12["1.2 Quantized PyOD (Lightweight Outlier Detection)<br/>Quantized TFLite Micro Model"]
+        R11 -->|Fail Extreme Limit| ED13{"Edge Decision"}
+        ML12 --> ED13
+        ED13 -->|Normal Data| STORE13[("Local Data Store<br/>(Minimal Rolling Buffer)")]
+        ED13 -->|Flagged Anomaly| TX13["Transmit Context Data<br/>(Trigger + Multi-Hour Window)"]
+    end
+
+    subgraph L2["2.0 Cloud Analytics Layer"]
+        TX13 -->|MQTT Incident Payload| AN21["2.1 Multi-Scale Multivariate Analyzer"]
+        AN21 --> ST21["Short-term Multivariate Analysis"]
+        AN21 --> LT21["Long-term Temporal/Seasonal Analysis"]
+        
+        ST21 --> MODA["Model A<br/>(Weather Classifier)"]
+        ST21 --> MODB["Model B<br/>(Sensor Defect Classifier)<br/>Trained on Synthetic Fault Injections"]
+        
+        MODA --> CONF23["2.3 Classification Confluence & Confidence Scoring<br/>(Decision Matrix)"]
+        MODB --> CONF23
+        
+        CONF23 --> XAI24["2.4 Explainable AI (XAI) Hub<br/>(SHAP Feature Importance & Text Justification)"]
+        LT21 --> XAI24
+    end
+
+    subgraph L3["3.0 Visualization & Alerting Layer (Operator Dashboard)"]
+        CONF23 --> ALERT32["3.2 Alerting System<br/>• Real-Time Anomaly Alert<br/>• Classification: Sensor Defect<br/>• Severity: High | Confidence: 92%"]
+        XAI24 --> REP33["3.3 Explainable Report Viewer<br/>• Text Justification (e.g., Frozen RH 4 hrs)<br/>• Visual Justification (SHAP Importance Bars)"]
+        LT21 --> PRED34["3.4 Sensor Health & Predictions<br/>• Sensor Health: At Risk<br/>• Maintenance: Calibration due < 2 Weeks"]
+        CONF23 -.->|Defect Confirmed| IMP35["3.5 Imputation & Correction Module<br/>(Multivariate LSTM / Regression)<br/>• Faulty T: 28.0°C ➔ Corrected: 24.5°C"]
+        ALERT32 --> TWIN["Next.js 3D Digital Twin<br/>(Procedural Mesh, Auto-Focus Camera)"]
+    end
+
+    style L1 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style L2 fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style L3 fill:#ede7f6,stroke:#4a148c,stroke-width:2px
 ```
 
 ### Simplified Deployment View
 
 ```mermaid
 graph LR
-    subgraph Edge / Simulation
-        SIM[Python Edge Simulator]
+    subgraph Physical Station / Emulation
+        ESP["ESP32 Microcontroller<br/>(FreeRTOS / TFLite Micro)"]
+        SIM["Python Edge Simulator<br/>(CI & Demonstration Emulation)"]
     end
 
-    subgraph Azure VM - Docker
-        MQ[Mosquitto Broker]
-        API[FastAPI Backend]
+    subgraph Cloud Infrastructure (Azure VM / Docker)
+        BROKER["Mosquitto MQTT Broker<br/>TLS :8883"]
+        CORE["FastAPI Analytics Engine<br/>• Multi-Scale Analyzer<br/>• Model A (Weather) & Model B (Defects)<br/>• Confluence Scorer<br/>• SHAP Hub & Imputation"]
     end
 
-    subgraph Managed Cloud
-        DB[(Supabase PostgreSQL)]
-        UI[Next.js on Vercel]
+    subgraph Persistence & Frontend
+        SUPA[("Supabase PostgreSQL<br/>Telemetry, Anomalies, Drift Logs")]
+        VERCEL["Next.js 14 Dashboard & 3D Digital Twin<br/>(Vercel / React Three Fiber / SSE)"]
     end
 
-    SIM -- MQTT/TLS --> MQ
-    MQ -- MQTT subscribe --> API
-    API -- SQL / connection pool --> DB
-    DB -- SSE via API --> UI
+    ESP -.->|MQTT Heartbeat / Incident Burst| BROKER
+    SIM -->|MQTT Stream / Injected Faults| BROKER
+    BROKER --> CORE
+    CORE --> SUPA
+    CORE -->|1 Hz SSE Stream| VERCEL
 ```
 
 ---
 
-## 3. Component Responsibilities
+## 3. Detailed Layer Explanation & Responsibilities
 
-| Component | Technology | Responsibility | Free-Tier / Deployment Note |
+| Layer & Module | Technology / Engine | Core Responsibility | Operational Benefit |
 |---|---|---|---|
-| Edge Simulator | Python, `paho-mqtt`, `numpy` | Generates synthetic temperature, pressure, humidity, and fault scenarios; publishes JSON over MQTT | Zero cost; highly flexible for injecting specific faults during demos |
-| Message Broker | Eclipse Mosquitto | Routes real-time telemetry efficiently between simulator and backend | Lightweight Docker container on Azure VM using friend’s free credits |
-| Backend API | FastAPI, Pydantic, `asyncio` | Subscribes to MQTT, validates payloads, applies IMD physics rules, runs ML inference, writes to Supabase, exposes REST + SSE | Hosted on Azure VM to bypass serverless cold-start latency |
-| Physics Rule Engine | Python rule functions | Rejects physically impossible or suspicious readings before ML inference | Lightweight, deterministic, easy to explain to judges |
-| Anomaly Model | 1D-CNN Autoencoder | Learns normal temporal patterns; flags high reconstruction error | Small model suitable for CPU inference on the Azure VM |
-| Explainability | SHAP | Identifies which sensors/time steps contributed most to an anomaly | Runs only on high-error events to reduce compute cost |
-| Database | Supabase PostgreSQL | Stores rolling 7-day telemetry history and anomaly logs | Robust PostgreSQL capabilities, time-series management, free for MVP |
-| Streaming | Server-Sent Events | Pushes new sensor packets and anomaly events to the UI at ~1 Hz | Simple unidirectional real-time stream; works well with Next.js |
-| Frontend | Next.js, React Three Fiber, Drei | Renders clickable 3D digital twin, station panels, anomaly timeline, live updates | Vercel optimized for React Three Fiber and procedural 3D elements |
+| **1.0 Edge Device Layer** | ESP32, C++ / FreeRTOS, TFLite Micro | Front-line sensory acquisition and dual-stage pre-filtering at the physical node. | Conserves >90% cellular/LoRaWAN bandwidth and avoids cloud compute fatigue. |
+| **1.1 IMD Plausibility Check** | Deterministic boundary rules | Rigid climatological filters based on established IMD thresholds (e.g., $T < 0^\circ\text{C}$ in Agra during May). | Computationally free on microcontrollers; instant rejection of impossible readings. |
+| **1.2 Quantized PyOD** | Quantized Autoencoder / Elliptic Envelope in TFLite Micro | Minimal multivariate statistical model checking short-term consistency across $T$, $P$, and $RH$. | Sub-15 ms inference on ESP32 running within 320 KB SRAM. |
+| **1.3 Edge Decision & Context Buffer** | Ring Buffer (SRAM / Flash SPIFFS) | Evaluates local anomaly status; stores normal telemetry locally, and transmits flagged readings with a 2–4 hour pre-anomaly context buffer. | Cloud receives full temporal dynamics leading up to an anomaly without 24/7 continuous raw streaming. |
+| **2.0 Cloud Analytics Layer** | FastAPI, Python 3.11, Docker, PyTorch / ONNX | High-performance backend running deep temporal and multivariate analytics on flagged incident buffers. | Offloads heavy computation from edge nodes to scalable cloud infrastructure. |
+| **2.1 Multi-Scale Multivariate Analyzer** | Sliding Window Tensor Processor | Evaluates short-term cross-sensor consistency ($T \leftrightarrow P \leftrightarrow RH$) and long-term seasonal baselines. | Distinguishes coordinated meteorological shifts from single-sensor physical failures. |
+| **2.2 Model A (Weather Classifier)** | Gradient Boosted Classifier / 1D-CNN | Specifically trained to recognize legitimate meteorological phenomenon (thunderstorms, cold fronts, squalls, diurnal peaks). | High recall on complex natural events to prevent false alarms. |
+| **2.2 Model B (Sensor Defect Classifier)** | Supervised Classifier trained on synthetic injected faults | Trained on synthetic failure patterns: frozen values, sudden single-point spikes, Gaussian noise bursts, and progressive drift. | Bypasses the lack of real sensor failure datasets by mathematically generating defect signatures. |
+| **2.3 Classification Confluence & Confidence Scoring** | Deterministic Confluence Truth Table | Fuses predictions from Model A and Model B into a unified decision matrix with confidence scores ($0-100\%$). | Replaces non-deterministic LLM chat dialogues with auditable, reproducible AI reasoning. |
+| **2.4 Explainable AI (XAI) Hub** | SHAP (`GradientExplainer` / `TreeExplainer`) | Computes feature attribution vectors and formats plain-English diagnostic justifications for operators. | Eliminates black-box distrust; gives field technicians specific hardware culprits. |
+| **3.0 Visualization & Alerting Layer** | Next.js 14, React Three Fiber, Tailwind CSS | Unified web dashboard featuring a clickable 3D digital twin of AWS station `AGRA-01`. | Real-time visual clarity for non-technical stakeholders and engineers alike. |
+| **3.2 Alerting System** | SSE / Push Notification Engine | Real-time classification banner with severity ratings, confidence percentages, and culprit badges. | Instant operational triage during critical failure events. |
+| **3.3 Explainable Report Viewer** | Dynamic Charting + Markdown Cards | Displays natural-language explanations alongside interactive SHAP bar charts highlighting feature contributions. | Technicians understand *why* an alert fired in under 5 seconds. |
+| **3.4 Sensor Health & Predictive Maintenance** | EWMA / CUSUM Trend Estimator | Tracks progressive multi-day sensor drift and estimates remaining days before calibration tolerance is breached. | Shifts AWS operations from reactive repairs to predictive maintenance. |
+| **3.5 Imputation & Correction Module** | Multivariate LSTM / Ridge Regressor | When a sensor failure is confirmed, estimates the true value of the damaged parameter using healthy correlated parameters. | Maintains unbroken downstream meteorological time-series records during sensor downtime. |
 
 ---
 
-## 4. Data Pipeline Flow
-
-### 4.1 Simulated Edge
-
-A Python script generates synthetic environmental data and publishes JSON payloads via MQTT.
-
-Example simulated fields:
-
-- Station ID
-- Timestamp
-- Temperature in °C
-- Pressure in hPa
-- Humidity in %
-- Optional fault-injection flags
-
-Fault scenarios for demo:
-
-- Heat spike
-- Sudden pressure drop
-- Humidity sensor stuck at 100%
-- Gradual drift
-- Cross-sensor inconsistency
-- Missing data / stale sensor
-
-### 4.2 Message Broker
-
-Eclipse Mosquitto routes real-time telemetry efficiently.
-
-Recommended topic structure:
-
-```text
-smartcity/telemetry/v1/{station_id}/raw
-smartcity/telemetry/v1/{station_id}/status
-smartcity/anomaly/v1/{station_id}
-```
-
-Example MQTT payload:
-
-```json
-{
-  "station_id": "AGRA-01",
-  "timestamp": "2026-09-16T10:00:00Z",
-  "temperature_c": 34.2,
-  "pressure_hpa": 1004.7,
-  "humidity_pct": 61.3,
-  "source": "edge-simulator",
-  "sequence": 1042
-}
-```
-
-### 4.3 Processing Engine
-
-FastAPI applies strict IMD physics rules before running the 1D-CNN autoencoder to identify deviations from learned normal behavior.
-
-Processing steps:
-
-1. Receive MQTT message.
-2. Validate JSON schema with Pydantic.
-3. Check timestamp freshness and sequence continuity.
-4. Apply IMD physics rules.
-5. If rule fails → write rule flag anomaly.
-6. If rule passes → push reading into sliding window.
-7. Run 1D-CNN autoencoder inference.
-8. If reconstruction error exceeds threshold → run SHAP.
-9. Write telemetry and/or anomaly records to Supabase.
-10. Publish update to SSE stream.
-
-### 4.4 Storage Integration
-
-Supabase stores a rolling 7-day history of telemetry and logs flagged anomalies.
-
-Recommended retention strategy:
-
-- Raw telemetry: 7 days.
-- Anomaly logs: 30–90 days or until manually resolved.
-- Aggregated hourly summaries: optional, longer retention.
-- Use `pg_cron` or a scheduled FastAPI job to delete telemetry older than 7 days.
-
-### 4.5 Interactive UI
-
-The Next.js frontend visualizes the 3D clickable digital twin and receives real-time updates via Server-Sent Events.
-
-UI capabilities:
-
-- 3D map of stations.
-- Clickable station nodes.
-- Color-coded status: green = normal, amber = warning, red = anomaly.
-- Live sensor panel: temperature, pressure, humidity.
-- Anomaly detail panel: severity, type, culprit sensors, SHAP explanation.
-- Operator actions: acknowledge, resolve, annotate.
-- Timeline view of recent anomalies.
-
-### 4.6 End-to-End Sequence
+## 4. End-to-End Data Pipeline Flow
 
 ```mermaid
 sequenceDiagram
-    participant Edge as Python Edge Simulator
-    participant MQTT as Mosquitto Broker
-    participant API as FastAPI Backend
-    participant Rules as IMD Physics Rules
-    participant AE as 1D-CNN Autoencoder
-    participant SHAP as SHAP Explainer
+    autonumber
+    participant Sensor as Physical Sensors (T, P, RH)
+    participant Edge as 1.0 ESP32 Edge Device
+    participant Broker as Mosquitto MQTT Broker
+    participant Cloud as 2.0 Cloud Analytics (FastAPI)
+    participant Models as Dual Models (A: Weather, B: Defect)
+    participant Confluence as 2.3 Classification Confluence
+    participant XAI as 2.4 Explainable AI Hub
     participant DB as Supabase PostgreSQL
-    participant UI as Next.js 3D Digital Twin
+    participant Dashboard as 3.0 Next.js Dashboard
 
-    Edge->>MQTT: Publish JSON telemetry
-    MQTT->>API: Deliver message
-    API->>API: Validate schema and freshness
-
-    API->>Rules: Apply IMD physics rules
-    alt Rule fail
-        Rules->>DB: Insert anomaly log with rule flag
-    else Rule pass
-        Rules->>AE: Run inference on sliding window
-        AE-->>API: Return reconstruction error
-        alt High error
-            AE->>SHAP: Compute explanation
-            SHAP->>DB: Insert anomaly + culprit sensors
-        else Normal
-            API->>DB: Insert raw telemetry
-        end
+    Sensor->>Edge: Raw analog/digital readings (1 Hz)
+    Edge->>Edge: 1.1 IMD Plausibility Check
+    alt Plausibility Violated (Impossible Reading)
+        Edge->>Edge: Flagged as Rule Outlier
+    else Plausibility Passed
+        Edge->>Edge: 1.2 Quantized PyOD / TFLite Micro Inference
     end
 
-    DB-->>UI: Initial hydration via REST
-    DB-->>API: Query latest/anomaly data
-    API-->>UI: SSE stream at ~1 Hz
+    alt Normal Data
+        Edge->>Edge: Append to Local Minimal Store
+        Note over Edge,Broker: Periodic heartbeat summary (e.g., every 10 min)
+    else Flagged Anomaly
+        Edge->>Broker: Publish Incident Packet (Trigger + Pre-Anomaly Context Buffer)
+        Broker->>Cloud: Route to /telemetry/incident
+        Cloud->>Cloud: 2.1 Multi-Scale Multivariate Analysis
+        Cloud->>Models: Send window to Model A (Weather) & Model B (Defect)
+        Models->>Confluence: Return probabilities P(Weather) and P(Defect)
+        Confluence->>Confluence: Evaluate Decision Matrix & Confidence Score
+        
+        opt Anomaly Confirmed
+            Confluence->>XAI: Request Attribution & Justification
+            XAI->>XAI: Compute SHAP values + generate text explanation
+            opt Sensor Defect Confirmed
+                Confluence->>Cloud: Trigger 3.5 Imputation Module
+                Cloud->>Cloud: Estimate corrected value from healthy channels
+            end
+        end
+
+        Cloud->>DB: Write Telemetry, Anomaly Incident, SHAP Values & Imputation
+        Cloud->>Dashboard: Stream via SSE (Real-Time Alert, 3D Auto-Focus, Report)
+    end
 ```
 
 ---
 
-## 5. Detection Logic
+## 5. Detection & Classification Logic
 
-### 5.1 IMD Physics Rules
+### 5.1 Layer 1.1: IMD Plausibility Check (Logical Filter)
 
-These rules are deterministic guards that reject physically impossible or highly suspicious readings before ML inference. They are illustrative and should be tuned to local calibration and sensor specifications.
+Deterministic bounds tuned to regional Indian climatology (e.g., Uttar Pradesh / Agra region). Any single reading violating these hard limits is immediately flagged on the edge without engaging ML.
 
-| Rule | Example Condition | Action |
-|---|---|---|
-| Temperature range | `-10°C <= temperature <= 60°C` | Fail if outside range |
-| Pressure range | `850 hPa <= pressure <= 1100 hPa` | Fail if outside range |
-| Humidity range | `0% <= humidity <= 100%` | Fail if outside range |
-| Dew point sanity | `dew_point <= temperature` | Fail if violated |
-| Rate of change | `abs(temp_delta) <= 5°C/min` | Warn/fail if exceeded |
-| Cross-sensor consistency | Heat spike + pressure drop + humidity rise | Flag as compound anomaly |
-| Stale data | `now - timestamp > 30s` | Flag stale sensor |
-| Sequence gap | `sequence != previous + 1` | Flag dropped packets |
-| Flatline | Same humidity for > 10 minutes | Flag stuck sensor |
-
-### 5.2 1D-CNN Autoencoder
-
-The autoencoder learns normal temporal behavior from historical telemetry windows.
-
-Recommended design:
-
-- Input: sliding window of 60 samples.
-- Channels: temperature, pressure, humidity.
-- Encoder: 1D convolution + pooling + latent vector.
-- Decoder: upsampling + 1D convolution + reconstruction.
-- Loss: mean squared error.
-- Threshold: `mean + k * std` on validation reconstruction errors.
-- High error → anomaly candidate.
-
-Why 1D-CNN:
-
-- Captures local temporal patterns.
-- Lightweight enough for CPU inference.
-- Works well with multivariate sensor streams.
-- Easy to explain to judges as “learned normal behavior.”
-
-### 5.3 SHAP Explainer
-
-When reconstruction error is high, SHAP explains which sensors and time steps contributed most.
-
-Outputs:
-
-- Top culprit sensors.
-- Contribution magnitude per sensor.
-- Time-step importance.
-- Human-readable explanation for the UI.
-
-Example UI text:
-
-> “Anomaly detected at AGRA-01. Primary contributor: temperature spike at 10:14:22. Secondary contributor: pressure drop at 10:14:25.”
-
-### 5.4 Decision Matrix
-
-| Rule Result | Autoencoder Error | SHAP | Final Status |
+| Parameter | Operational Climatological Limits | Physical Rate-of-Change Limit | Failure Condition Flagged |
 |---|---|---|---|
-| Pass | Low | Not run | Normal |
-| Pass | High | Run | AI anomaly |
-| Fail | Not run | Not run | Rule flag |
-| Fail | High | Run | Compound anomaly |
-| Stale / missing | Not run | Not run | Sensor health warning |
+| **Temperature ($T$)** | $-5.0^\circ\text{C} \le T \le 52.0^\circ\text{C}$ (Agra) | $|\Delta T| \le 5.0^\circ\text{C} / \text{10 min}$ | Thermal spike / open circuit |
+| **Relative Humidity ($RH$)** | $0.0\% \le RH \le 100.0\%$ | $|\Delta RH| \le 20.0\% / \text{10 min}$ | Capacitive saturation / short |
+| **Barometric Pressure ($P$)** | $920.0\,\text{hPa} \le P \le 1060.0\,\text{hPa}$ | $|\Delta P| \le 4.0\,\text{hPa} / \text{10 min}$ | Barometric membrane rupture |
+| **Dew Point Consistency ($T_d$)** | $T_d \le T + 0.5^\circ\text{C}$ | Magnus physical formula check | Supersaturation impossibility |
+| **Flatline Detection** | Non-zero variance | Exact same value for $> 45\text{ min}$ | Frozen ADC / stuck sensor |
+
+### 5.2 Layer 1.2: Quantized PyOD / TFLite Micro
+
+- **Target Architecture**: Quantized Autoencoder or Minimum Covariance Determinant (MCD) implemented via TensorFlow Lite for Microcontrollers.
+- **Model Size**: $< 120\,\text{KB}$ INT8 weights.
+- **Window Length**: 12 timesteps (representing rolling history).
+- **Inference Time**: $< 15\,\text{ms}$ on an ESP32-S3 (240 MHz dual-core Xtensa).
+- **Execution Principle**: If the reconstruction error or Mahalanobis distance exceeds threshold $\tau_{\text{edge}}$, the edge transitions from local buffering to incident transmission.
+
+### 5.3 Layer 2.1: Multi-Scale Multivariate Analyzer
+
+Flagged packets received in the cloud are unpacked into two temporal frames:
+1. **Short-Term Multivariate Consistency (12 timesteps = 2 hours)**:
+   Calculates inter-channel cross-derivatives ($dT/dt$, $dP/dt$, $dRH/dt$, and $\Delta T_{\text{spatial}}$). For instance, when barometric pressure drops rapidly during a squall, temperature typically falls while relative humidity rises. A pressure drop unaccompanied by any thermodynamic response indicates a barometric transducer anomaly.
+2. **Long-Term Temporal/Seasonal Analysis (7–30 days)**:
+   Extracts diurnal harmonics, moving medians, and baseline residual drifts to detect slow sensor degradation that never breaches short-term rate limits.
+
+### 5.4 Layer 2.2: Dual-Model Classification & Reasoning
+
+Rather than relying on unstructured LLM debates, two specialized supervised models evaluate the telemetry window:
+
+#### Model A: Weather Classifier
+- **Objective**: Accurately recognize legitimate high-energy atmospheric events.
+- **Training Corpus**: Historical IMD and reanalysis datasets containing ground-truth weather events (heatwaves, pre-monsoon dust storms, severe thunderstorms, fog inversions).
+- **Output**: Probability of natural meteorological phenomenon: $P(\text{Weather}) \in [0.0, 1.0]$.
+
+#### Model B: Sensor Defect Classifier
+- **Objective**: Accurately recognize physical and electrical sensor failure modes.
+- **Training Strategy (Synthetic Injection)**: Because real-world AWS defect datasets are unavailable, realistic defect signatures are mathematically injected into clean baseline weather series:
+  1. *Frozen Sensor*: Flatline holding constant despite environmental diurnal variation ($y_t = y_{t-1}$).
+  2. *Impulse Spikes*: Sudden single-point or double-point excursions to extreme values ($y_t = y_t + \delta$).
+  3. *Gaussian Noise Burst*: High-frequency variance injected across a single sensor channel without cross-channel physical propagation.
+  4. *Capacitive Drift*: Progressive linear or exponential bias accumulated over days ($\Delta y = +0.1^\circ\text{C}/\text{day}$ or $+15\%\,\text{RH}$).
+  5. *Intermittent Dropout / Packet Loss*: Stale or missing frames.
+- **Output**: Probability of hardware defect: $P(\text{Defect}) \in [0.0, 1.0]$, plus multi-class defect classification.
+
+### 5.5 Layer 2.3: Classification Confluence & Confidence Scoring
+
+The Confluence Engine computes the joint classification using a deterministic decision matrix:
+
+| Model A ($P(\text{Weather})$) | Model B ($P(\text{Defect})$) | Confluence Decision | Severity | Operator Alert? | Action Taken |
+|---|---|---|---|---|---|
+| **High ($\ge 0.70$)** | **Low ($< 0.30$)** | **Natural Weather Event** | Nominal / Info | ❌ No Alarm | Logged as valid extreme weather; baseline updated |
+| **Low ($< 0.30$)** | **High ($\ge 0.70$)** | **Sensor Defect** | High / Critical | 🚨 **Alarm Raised** | Trigger SHAP, flag faulty sensor, invoke Imputation |
+| **High ($\ge 0.70$)** | **High ($\ge 0.70$)** | **Compound Event** | Warning | ⚠️ **Warning Raised** | Weather event with degraded sensor; technician review |
+| **Low ($< 0.30$)** | **Low ($< 0.30$)** | **Uncertain Anomaly** | Moderate | 🔍 Triage Flag | Logged for active learning / operator verification |
+
+#### Confidence Scoring Formula
+
+$$\text{Confidence Score} = \max\left(P(\text{Defect}), P(\text{Weather})\right) \times \left(1.0 - |P(\text{Defect}) - P(\text{Weather})| \times 0.2\right)$$
+
+*Example*: If Model B reports $P(\text{Defect}) = 0.94$ and Model A reports $P(\text{Weather}) = 0.08$, the resulting status is **Sensor Defect** with **92.5% Confidence**.
+
+### 5.6 Layer 2.4: Explainable AI (XAI) Hub
+
+To ensure operator trust, the XAI Hub generates both mathematical and natural-language justifications:
+1. **Mathematical Attribution (SHAP)**:
+   Computes Shapley values over the 12-timestep window to rank parameter contributions ($RH: 68\%$, $P: 22\%$, $T: 10\%$).
+2. **Text Justification Generator**:
+   Translates model features and rules into transparent operational language:
+   > *"Model B flagged a Frozen Value Anomaly with 94% confidence: Relative Humidity remained invariant at 84.2% for 4.2 consecutive hours despite ambient temperature fluctuating by 6.1°C. Model A confirmed weather-driven invariance is highly improbable (P=0.06)."*
+
+### 5.7 Layer 3.4: Sensor Health Status & Predictive Maintenance
+
+To fulfill Objective 6 (long-term drift monitoring):
+- **Mechanism**: The cloud analytics engine calculates an Exponentially Weighted Moving Average (EWMA) of daily residual biases against diurnal expectations and spatial neighbor baselines.
+- **Maintenance Horizon**: When cumulative drift exceeds $2\sigma$ above healthy baselines, the dashboard flags **"At Risk"** and projects the remaining useful calibration life:
+  $$\text{Days to Recalibration} = \frac{\text{Tolerance Threshold} - \text{Current Drift}}{\text{Daily Drift Rate}}$$
+- **Dashboard Display**: *"Pressure Sensor Calibration due in < 2 Weeks (Cumulative Drift: +2.8 hPa over 14 days)."*
+
+### 5.8 Layer 3.5: Imputation & Correction Module
+
+When a sensor defect is confirmed by the Confluence Matrix:
+- **Model**: Multivariate LSTM / Ridge Regressor trained on clean multivariate correlation manifolds.
+- **Execution**: Takes the surviving, healthy sensor channels (e.g., $P$ and $RH$) along with temporal features (hour-of-day, solar elevation) to synthesize an imputed reading for the faulty channel ($T$).
+- **Output**: Suggested corrected value displayed on the operator dashboard and recorded in an imputed data layer:
+  $$\text{Faulty } T: 38.4^\circ\text{C} \longrightarrow \text{Suggested Imputed } T: 29.1^\circ\text{C}$$
 
 ---
 
-## 6. Data Contracts
+## 6. Data Contracts & Edge-to-Cloud Protocols
 
-### 6.1 Database Schema
+### 6.1 MQTT Communication Protocol
+
+To optimize wireless bandwidth on remote cellular/LoRaWAN links, the system uses a **dual-mode topic architecture**:
+
+#### 1. Periodic Nominal Heartbeat
+- **Topic**: `smartcity/telemetry/v1/{station_id}/heartbeat`
+- **Cadence**: Every 10–15 minutes (or 1 Hz during active interactive demo mode)
+- **Payload**:
+  ```json
+  {
+    "station_id": "AGRA-01",
+    "timestamp": "2026-09-27T10:00:00Z",
+    "status": "HEALTHY",
+    "metrics": {
+      "temperature_c": 32.4,
+      "pressure_hpa": 1008.2,
+      "humidity_pct": 58.1
+    },
+    "battery_v": 3.92
+  }
+  ```
+
+#### 2. Flagged Incident Packet (Context Burst)
+- **Topic**: `smartcity/anomaly/v1/{station_id}/incident`
+- **Trigger**: Fired immediately when Layer 1.1 or 1.2 flags an outlier.
+- **Payload**:
+  ```json
+  {
+    "station_id": "AGRA-01",
+    "incident_id": "inc_20260927_0042",
+    "triggered_at": "2026-09-27T10:14:22Z",
+    "trigger_reason": "PYOD_RECONSTRUCTION_BREACH",
+    "suspect_sensor": "humidity_pct",
+    "context_window": [
+      {"timestamp": "2026-09-27T08:14:22Z", "t": 28.1, "p": 1010.1, "rh": 84.2},
+      {"timestamp": "2026-09-27T10:14:22Z", "t": 34.2, "p": 1008.0, "rh": 84.2}
+    ]
+  }
+  ```
+
+### 6.2 Supabase Database Schema
 
 ```mermaid
 erDiagram
-    RAW_TELEMETRY {
+    TELEMETRY_RECORDS {
         uuid id PK
         timestamptz recorded_at
         text station_id
         float temperature_c
         float pressure_hpa
         float humidity_pct
-        jsonb raw_payload
+        text edge_status
         timestamptz created_at
     }
 
-    ANOMALY_LOG {
-        uuid anomaly_id PK
+    ANOMALY_INCIDENTS {
+        uuid incident_id PK
         timestamptz detected_at
         text station_id
-        text anomaly_type
-        float severity_score
-        jsonb culprit_sensors
-        jsonb shap_values
+        text final_classification
+        float confidence_score
+        float model_a_weather_prob
+        float model_b_defect_prob
+        text culprit_sensor
+        jsonb shap_attributions
+        text text_justification
+        float imputed_value
         text status
-        text resolution_note
         timestamptz resolved_at
     }
 
-    RAW_TELEMETRY ||--o{ ANOMALY_LOG : triggers
-```
-
-#### Raw Telemetry Table
-
-| Column | Type | Notes |
-|---|---|---|
-| `id` | `uuid` | Primary key |
-| `recorded_at` | `timestamptz` | Sensor timestamp |
-| `station_id` | `text` | e.g., `AGRA-01` |
-| `temperature_c` | `float` | Temperature in Celsius |
-| `pressure_hpa` | `float` | Pressure in hPa |
-| `humidity_pct` | `float` | Relative humidity |
-| `raw_payload` | `jsonb` | Original MQTT payload |
-| `created_at` | `timestamptz` | Insert time |
-
-#### Anomaly Log Table
-
-| Column | Type | Notes |
-|---|---|---|
-| `anomaly_id` | `uuid` | Primary key |
-| `detected_at` | `timestamptz` | Detection time |
-| `station_id` | `text` | Station reference |
-| `anomaly_type` | `text` | `rule_flag`, `ai_anomaly`, `compound` |
-| `severity_score` | `float` | 0.0–1.0 |
-| `culprit_sensors` | `jsonb` | e.g., `["temperature", "pressure"]` |
-| `shap_values` | `jsonb` | SHAP explanation |
-| `status` | `text` | `open`, `acknowledged`, `resolved` |
-| `resolution_note` | `text` | Operator note |
-| `resolved_at` | `timestamptz` | Resolution time |
-
-### 6.2 REST API Contracts
-
-#### Hydration Endpoint
-
-```http
-GET /api/v1/telemetry/latest?station_id=AGRA-01&limit=100
-```
-
-Loads the initial dashboard state.
-
-Example response:
-
-```json
-{
-  "station_id": "AGRA-01",
-  "latest": {
-    "timestamp": "2026-09-16T10:00:00Z",
-    "temperature_c": 34.2,
-    "pressure_hpa": 1004.7,
-    "humidity_pct": 61.3
-  },
-  "history": [
-    {
-      "timestamp": "2026-09-16T09:59:59Z",
-      "temperature_c": 34.1,
-      "pressure_hpa": 1004.8,
-      "humidity_pct": 61.2
+    MAINTENANCE_PREDICTIONS {
+        uuid id PK
+        text station_id
+        text sensor_name
+        float cumulative_drift
+        text health_status
+        int estimated_days_to_calibration
+        timestamptz updated_at
     }
-  ]
-}
-```
 
-#### Streaming Endpoint
-
-```http
-GET /api/v1/telemetry/stream?station_id=AGRA-01
-Content-Type: text/event-stream
-```
-
-A continuous SSE connection pushes new sensor packets to the UI at 1 Hz.
-
-Example SSE events:
-
-```text
-event: telemetry
-id: 1726492800000
-data: {"station_id":"AGRA-01","timestamp":"2026-09-16T10:00:00Z","temperature_c":34.2,"pressure_hpa":1004.7,"humidity_pct":61.3}
-
-event: anomaly
-id: 1726492801000
-data: {"anomaly_id":"a1b2c3","station_id":"AGRA-01","anomaly_type":"ai_anomaly","severity_score":0.91,"culprit_sensors":["temperature","pressure"]}
-
-event: heartbeat
-data: {"status":"ok","timestamp":"2026-09-16T10:00:01Z"}
-```
-
-#### Anomaly Management Endpoints
-
-```http
-GET /api/v1/anomalies?status=open&limit=50
-PATCH /api/v1/anomalies/{anomaly_id}
-```
-
-Example PATCH body:
-
-```json
-{
-  "status": "resolved",
-  "resolution_note": "Maintenance team recalibrated temperature sensor."
-}
+    TELEMETRY_RECORDS ||--o{ ANOMALY_INCIDENTS : triggers
+    TELEMETRY_RECORDS ||--o{ MAINTENANCE_PREDICTIONS : tracks
 ```
 
 ---
 
-## 7. Frontend: Next.js 3D Digital Twin
+## 7. Frontend: Operator Dashboard & 3D Digital Twin
 
-### Core Stack
+The Next.js 14 web client translates analytical confluence into immediate operational clarity:
 
-- Next.js App Router
-- React Three Fiber
-- Drei
-- Tailwind CSS
-- Zustand or React Query for state
-- EventSource for SSE
-
-### 3D Digital Twin Features
-
-- Procedurally generated city/station layout.
-- Clickable station meshes.
-- Hover tooltips with live readings.
-- Color states:
-  - Green: normal
-  - Amber: warning
-  - Red: anomaly
-- Camera controls: orbit, zoom, reset.
-- Anomaly pulse animation.
-- Side panel with sensor charts and SHAP explanation.
-- Operator resolution workflow.
-
-### Real-Time Update Strategy
-
-1. On page load, call `/api/v1/telemetry/latest`.
-2. Open SSE connection to `/api/v1/telemetry/stream`.
-3. Update Zustand store on each `telemetry` event.
-4. On `anomaly` event, trigger 3D pulse and open anomaly panel.
-5. Reconnect automatically with exponential backoff if SSE drops.
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│  🛰️ SkyGuard AI — Automatic Weather Station Digital Twin (AGRA-01)                      │
+├───────────────────────────────────────────┬────────────────────────────────────────────┤
+│  3D Digital Twin (React Three Fiber)      │  3.2 Real-Time Anomaly Alert Banner        │
+│                                           │  [CRITICAL ALERT] Classification: Defect   │
+│   [ Animated Anemometer & Vane ]          │  Severity: HIGH | Confidence: 92.4%        │
+│   [ Solar Panel Array ]                   ├────────────────────────────────────────────┤
+│   [ Clickable Sensor Shield (RH) ]        │  3.3 Explainable Report Viewer (XAI Hub)   │
+│     *PULSING RED on Anomaly*              │  "Model B detected frozen RH flatline      │
+│     *Auto-Camera Lerp to Culprit*         │   for 4.2 hrs during temperature climb."   │
+│                                           │  SHAP Feature Importance:                  │
+│                                           │  RH [████████████████████] 88%             │
+│                                           │  P  [████                ] 18%             │
+│                                           │  T  [██                  ]  9%             │
+│                                           ├────────────────────────────────────────────┤
+│                                           │  3.4 Sensor Health & Maintenance Forecast  │
+│                                           │  Status: AT RISK                           │
+│                                           │  Calibration Due: < 2 Weeks (Pressure)     │
+│                                           ├────────────────────────────────────────────┤
+│                                           │  3.5 Imputation & Correction Module        │
+│                                           │  Reported RH: 84.2% (Faulty)               │
+│                                           │  Suggested Imputed RH: 42.6% [Apply]       │
+└───────────────────────────────────────────┴────────────────────────────────────────────┘
+```
 
 ---
 
-## 8. Free-Tier Tech Stack Justification
+## 8. Technology Stack & Deployment Topology
 
-| Layer | Choice | Justification |
+| Component | Target Physical Deployment | Emulated / Demo Mode |
 |---|---|---|
-| Edge Simulation | Python | Zero cost and highly flexible for injecting specific faults during live demonstrations |
-| Cloud Messaging | Mosquitto | Lightweight Docker container on a friend’s Azure VM maximizes free credits |
-| Backend API | FastAPI | Hosting on the Azure VM completely bypasses serverless cold-start latency issues |
-| Database | Supabase | Robust PostgreSQL capabilities with easy time-series management and no cost for the MVP |
-| Frontend | Next.js / Vercel | Optimized for React Three Fiber, ensuring procedural 3D elements render flawlessly in the browser |
-| Streaming | SSE | Simpler than WebSockets for unidirectional live updates; works well through proxies and Vercel |
-| Explainability | SHAP | Runs only on high-error events, keeping compute cost low |
+| **Edge Hardware** | ESP32-S3 (Xtensa Dual-Core, 512KB SRAM, 8MB Flash) | Python Edge Simulator (`backend/simulator/client.py`) |
+| **Edge Inference** | TensorFlow Lite for Microcontrollers (INT8 quantized) | PyOD / ONNX Runtime in Python environment |
+| **Broker** | Eclipse Mosquitto (Dockerized, TLS 8883) | Local Mosquitto on Docker (`localhost:1883`) |
+| **Cloud Core** | FastAPI on Linux Host / Azure VM | FastAPI ASGI Server (`uvicorn main:app`) |
+| **Dual Models** | LightGBM / 1D-CNN (Model A) & Injected-Fault Model B | PyTorch / Scikit-Learn pipelines in Python |
+| **Explainability** | SHAP (`TreeExplainer` / `GradientExplainer`) | SHAP library with pre-sampled background tensors |
+| **Database** | Supabase Cloud (Managed PostgreSQL with pgvector) | Supabase Cloud / In-memory data store |
+| **Operator UI** | Next.js 14 App Router on Vercel | Local Node.js server (`localhost:3000`) |
 
 ---
 
-## 9. Deployment Topology
+## 9. Comprehensive Demo & Pitch Narrative
 
-### Azure VM Docker Compose
-
-```yaml
-version: "3.9"
-
-services:
-  mosquitto:
-    image: eclipse-mosquitto:2
-    ports:
-      - "1883:1883"
-      - "8883:8883"
-    volumes:
-      - ./mosquitto/config:/mosquitto/config
-      - ./mosquitto/data:/mosquitto/data
-      - ./mosquitto/log:/mosquitto/log
-    restart: unless-stopped
-
-  fastapi:
-    build: ./backend
-    ports:
-      - "8000:8000"
-    environment:
-      - MQTT_BROKER=mosquitto
-      - MQTT_PORT=1883
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
-      - MODEL_PATH=/app/models/autoencoder.pt
-    depends_on:
-      - mosquitto
-    restart: unless-stopped
-```
-
-### Environment Variables
-
-```text
-MQTT_BROKER=mosquitto
-MQTT_PORT=1883
-MQTT_USERNAME=smartcity
-MQTT_PASSWORD=change-me
-
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_KEY=your-service-role-key
-
-MODEL_PATH=/app/models/autoencoder.pt
-ANOMALY_THRESHOLD=0.042
-
-CORS_ORIGINS=https://your-app.vercel.app
-```
-
----
-
-## 10. Security, Reliability, and Observability
-
-### Security
-
-- MQTT username/password + TLS on port 8883.
-- Topic ACLs to restrict publishers/subscribers.
-- FastAPI API key or JWT for write endpoints.
-- CORS restricted to the Vercel domain.
-- Supabase Row Level Security enabled.
-- Service role key only on backend, never in frontend.
-- Pydantic validation for all incoming payloads.
-- Rate limiting on public endpoints.
-
-### Reliability
-
-- Mosquitto healthcheck and restart policy.
-- FastAPI `/health` and `/ready` endpoints.
-- SSE reconnect with exponential backoff.
-- Database connection pooling.
-- Dead-letter queue for malformed MQTT messages.
-- Graceful degradation: if ML model fails, fall back to rule-only detection.
-
-### Observability
-
-- Structured JSON logs.
-- Metrics:
-  - Messages/second
-  - Rule failure rate
-  - Autoencoder error distribution
-  - SSE connected clients
-  - Database write latency
-- Alerting thresholds for:
-  - Broker down
-  - API down
-  - DB write failures
-  - Anomaly spike
-
----
-
-## 11. Demo Narrative
-
-1. Start the Python edge simulator, Mosquitto, FastAPI, and Next.js frontend.
-2. Show the 3D digital twin with all stations green.
-3. Inject a heat spike from the simulator.
-4. FastAPI rules pass if within range, but the 1D-CNN autoencoder detects high reconstruction error.
-5. SHAP identifies temperature as the primary culprit.
-6. The 3D station turns red and pulses.
-7. Click the station to show live readings, anomaly severity, and SHAP explanation.
-8. Inject a pressure drop to demonstrate a compound anomaly.
-9. Resolve the anomaly from the UI.
-10. Show the anomaly log status changing to `resolved`.
-
----
-
-## 12. Future Enhancements
-
-- Integrate real sensors via LoRaWAN or MQTT gateways.
-- Add edge inference on Raspberry Pi or Jetson Nano.
-- Implement automated model retraining pipeline.
-- Add user authentication and role-based access.
-- Support multiple cities and tenant isolation.
-- Add SMS/email alerting via Twilio or Resend.
-- Import real GIS/city models for the 3D twin.
-- Add historical playback and time-travel debugging.
-- Use Supabase Realtime as an alternative to SSE.
-- Add Prometheus + Grafana dashboards.
-
----
-
-## 13. Summary
-
-This 3D clickable digital twin architecture is purpose-built to impress non-technical judges at events like the Agra Smart City Shark Tank, while providing the technical depth needed to secure a competitive AI development internship. It demonstrates real-time data ingestion, physics-based validation, deep learning anomaly detection, explainable AI, cloud storage, and an interactive 3D frontend — all within a free-tier-friendly stack.
+1. **Baseline Ingestion (Status Green)**: The edge device streams nominal diurnal cycles. The 3D Digital Twin reflects nominal conditions, and Sensor Health reads **Healthy**.
+2. **True-Negative Meteorological Test (Thunderstorm Ingestion)**: A rapid barometric pressure plunge accompanied by a thermodynamic temperature drop and humidity climb is simulated. Model A flags a weather event with 96% confidence; Model B flags zero defect signature. The Confluence Matrix registers **Natural Weather Event**; the 3D twin remains green with zero false alarm.
+3. **Synthetic Defect Test (Capacitive RH Freeze)**: The relative humidity reading is artificially frozen at 84.2% while temperature continues its natural diurnal curve.
+4. **Edge Filtering & Context Burst**: Layer 1.1 passes because 84.2% is within 0–100%, but Layer 1.2 (Quantized PyOD) flags the multivariate correlation breach. The edge immediately transmits the incident packet and the preceding 2-hour context buffer.
+5. **Cloud Confluence & Triage**: Model B detects the flatline signature ($P(\text{Defect}) = 0.94$); Model A confirms low weather likelihood ($P(\text{Weather}) = 0.08$). The Confluence Engine fires a **Sensor Defect Alert** at 92.4% confidence.
+6. **XAI Explanation & 3D Auto-Lerp**: The Next.js dashboard flashes red; the camera automatically glides and zooms into the humidity sensor shield. The Explainable Report Viewer renders the natural-language diagnostic and SHAP bar chart highlighting Relative Humidity as the 88% driver.
+7. **Predictive Maintenance Alert**: The operator inspects the Sensor Health tab, showing long-term cumulative pressure drift approaching the recalibration threshold.
+8. **Imputation & Recovery**: The Imputation Module displays a suggested corrected value ($42.6\%\,\text{RH}$), allowing the operator to verify data recovery in real time.

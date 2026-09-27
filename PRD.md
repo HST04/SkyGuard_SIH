@@ -1,13 +1,13 @@
 # Product Requirements Document — SkyGuard AI
-## Self-Healing Edge-to-Cloud Anomaly Detection for Automatic Weather Stations
+## Split-Edge/Cloud Anomaly Detection, Dual-Model Confluence, and Predictive Maintenance for Automatic Weather Stations
 
 | Field | Value |
 |---|---|
-| **Document Version** | 2.0 (Expanded) |
+| **Document Version** | 2.1 (Split-Edge/Cloud Architecture) |
 | **Status** | Approved for Build |
-| **Owner** | Project Lead / ML Engineer |
-| **Last Updated** | 2026-09-16 |
-| **Target Release** | Hackathon MVP: Week 6 · Public Portfolio Launch: December |
+| **Owner** | Project Lead / ML Systems Engineer |
+| **Last Updated** | 2026-09-27 |
+| **Target Release** | Hackathon MVP / Portfolio Production Showcase |
 | **Classification** | Public / Portfolio |
 
 ### Revision History
@@ -15,55 +15,48 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 1.0 | — | — | Initial hackathon scope |
-| 2.0 | 2026-09-16 | — | Full expansion: architecture, data contracts, ML spec, NFRs, QA, rollout |
+| 2.0 | 2026-09-16 | — | Full expansion: architecture, data contracts, ML spec, NFRs |
+| 2.1 | 2026-09-27 | Architecture Team | Split-Edge/Cloud deployment (ESP32/TFLite Micro), Dual-Model Confluence (Weather vs. Defect with synthetic fault injection), XAI Hub, Predictive Maintenance (3.4), and Imputation Module (3.5) |
 
 ---
 
 ## 1. Executive Summary
 
-Automatic Weather Stations (AWS) are deployed in harsh, unmanned environments where sensors degrade, drift, and fail silently. Conventional monitoring relies on **static threshold rules** (e.g., "alert if relative humidity > 100%"). These rules are trivially defeated by:
+Automatic Weather Stations (AWS) are deployed across remote, harsh environments where sensors degrade, drift, and fail silently. Conventional monitoring relies on **static single-parameter threshold rules** (e.g., "alert if relative humidity > 100%"). These rules fail to catch silent sensor drift, environmental noise, and cross-channel decoupling, leading to severe alarm fatigue.
 
-- **Sensor drift** — slow bias that never crosses a hard limit.
-- **Environmental noise** — dust, icing, thermal gradients, radio interference.
-- **Cross-channel decoupling** — a humidity sensor fails while temperature and pressure remain nominal.
+**SkyGuard AI** implements a **Split-Edge/Cloud Architecture** that reconciles compute constraints with deep learning capabilities:
 
-The result is **alarm fatigue**: operators disable alerts, and genuine faults go undetected.
-
-**SkyGuard AI** is a self-healing, edge-to-cloud anomaly detection pipeline that:
-
-1. **Pre-filters** physically impossible readings using hardcoded IMD climatological rules (cheap, deterministic, zero-latency).
-2. **Learns the normal manifold** of multivariate weather telemetry with a 1D-CNN autoencoder, exploiting inter-parameter correlation (T ↔ P ↔ RH) as the primary health signal.
-3. **Explains** every flag via SHAP attribution so operators trust and act on alerts.
-4. **Improves itself** through an operator feedback loop: confirmed/refuted anomalies are logged to Supabase, clustered with DBSCAN in latent space, and converted into threshold-tuning recommendations.
-5. **Visualizes** the station as a procedural Three.js Digital Twin with a live 1 Hz SSE feed and a demo-ready fault injector.
-
-**MVP is 100% software-simulated.** No hardware dependency, no field deployment, no procurement blocker — enabling a fully contained, reproducible sprint.
+1. **Edge Device Layer (1.0 — ESP32 Deployment)**: Microcontrollers execute front-line, two-stage filtering: zero-cost deterministic IMD logical checks and quantized micro outlier detection (Quantized PyOD / TFLite Micro). Normal data is stored locally; only flagged anomalies trigger an MQTT uplink containing the trigger packet and a 2–4 hour pre-anomaly contextual buffer, preserving >90% wireless bandwidth.
+2. **Cloud Analytics Layer (2.0 — Structured Confluence Reasoning)**: Context-rich anomalies are evaluated by a Multi-Scale Analyzer and a **Dual-Model Classifier**:
+   - **Model A (Weather Classifier)**: Distinguishes natural severe weather phenomena (squall lines, thunderstorms, temperature inversions).
+   - **Model B (Sensor Defect Classifier)**: Specially trained on synthetically injected sensor defects (frozen flatlines, impulse spikes, noise bursts, drift, packet loss) to circumvent the complete lack of real-world sensor failure datasets.
+   - **Classification Confluence & Confidence Scoring**: A deterministic decision matrix fuses Model A and Model B outputs into an auditable classification and confidence score ($0-100\%$).
+3. **Operational Assurance & Full Lifecycle (3.0 — Dashboard)**:
+   - **Explainable AI (XAI) Hub (3.3)**: Generates per-sensor SHAP importance charts and plain-English text justifications.
+   - **Sensor Health & Predictive Maintenance (3.4)**: Tracks long-term cumulative drift via EWMA to forecast recalibration due dates weeks in advance.
+   - **Imputation & Correction Module (3.5)**: Reconstructs corrupt readings using multivariate regression / LSTM across surviving healthy sensors.
+   - **3D Digital Twin**: Interactive Three.js model of station `AGRA-01` with automated camera targeting of culprit sensor shields.
 
 ---
 
-## 2. Problem Statement
+## 2. Problem Statement & Root Causes
 
-### 2.1 Current State
+### 2.1 Current State vs. SkyGuard AI
 
-| Aspect | Today |
-|---|---|
-| Detection method | Static IMD thresholds, single-parameter |
-| False alarm rate | High (estimated 60–80% of alerts are non-actionable) |
-| Multivariate reasoning | None |
-| Explainability | None — alerts are binary and opaque |
-| Adaptation | None — thresholds are hand-tuned and frozen |
-| Operator trust | Low; alert fatigue leads to ignored dashboards |
+| Aspect | Conventional Systems | SkyGuard AI |
+|---|---|---|
+| **Edge Compute** | Passive data loggers; no filtering | Two-stage edge filtering (IMD rules + Quantized PyOD in TFLite Micro on ESP32) |
+| **Bandwidth** | Continuous 24/7 raw streaming over cellular | Edge buffering; incident bursts with 2–4 hr context window upon anomaly |
+| **Reasoning Engine** | Single-parameter static thresholds | Dual-Model Confluence (Model A Weather vs. Model B Defect) |
+| **Defect Data Scarcity** | No labeled failure data available | Synthetic fault injection into clean weather series for Model B training |
+| **Explainability** | Opaque binary flags | SHAP feature attributions + natural-language justifications |
+| **Post-Failure Action** | Discard data / gap in record | Multivariate LSTM Imputation & Predictive Maintenance calibration warnings |
 
-### 2.2 Root Causes
+### 2.2 Root Causes Addressed
 
-1. **Univariate blindness.** A humidity sensor reading 78% RH is "valid" in isolation — but not if temperature is 41 °C and pressure is falling, a combination that is climatologically implausible.
-2. **Threshold brittleness.** Physical limits (0–100% RH) catch only gross failures, not drift or noise.
-3. **No feedback channel.** Operators have no mechanism to teach the system which alerts were real.
-4. **Compute constraints.** AWS gateways are low-power; heavy models cannot run on-device without careful optimization.
-
-### 2.3 Opportunity
-
-Multivariate correlation structure is a **free, high-signal health indicator**. When sensors are healthy, T/P/RH move together in physically consistent ways. When one degrades, the correlation breaks — often before any single channel violates a hard limit. A compact convolutional autoencoder can learn this structure and flag deviations at sub-50 ms latency.
+1. **Univariate Blindness**: Inter-channel physics ($T \leftrightarrow P \leftrightarrow RH$) are monitored by the Multi-Scale Analyzer.
+2. **Defect Data Non-Existence**: Mathematical injection of 5 fault archetypes (drift, freeze, spike, noise, dropout) enables robust supervised defect classification without real-world historical failure datasets.
+3. **Compute Realities**: ESP32 microcontrollers cannot run dual-agent LLMs; edge-filtering + cloud confluence provides state-of-the-art accuracy within real hardware limits.
 
 ---
 
@@ -73,147 +66,108 @@ Multivariate correlation structure is a **free, high-signal health indicator**. 
 
 | ID | Goal | Type |
 |---|---|---|
-| G-1 | Detect sensor anomalies invisible to static thresholds | Technical |
-| G-2 | Reduce false alarm rate by ≥80% vs. static IMD rules | Business |
-| G-3 | Achieve PR-AUC > 0.90 on held-out fault-injection test set | Technical |
-| G-4 | Sub-50 ms per-window inference on constrained hardware | Technical |
-| G-5 | Provide human-readable explanations for every alert | Product |
-| G-6 | Close the loop with an operator feedback → retraining cycle | Product |
-| G-7 | Ship a visually compelling public artifact suitable for social build-in-public content | Portfolio |
+| **G-1** | Pre-filter obvious errors locally on ESP32 with sub-15 ms latency | Technical |
+| **G-2** | Differentiate severe storms from sensor failures via Dual-Model Confluence | Technical |
+| **G-3** | Reduce false alarms by $\ge 85\%$ compared to static IMD threshold baselines | Operational |
+| **G-4** | Train Model B using synthetic fault injections to achieve $\ge 94\%$ defect precision | ML Engineering |
+| **G-5** | Provide SHAP feature attributions and plain-English explanations for every alert | Product / XAI |
+| **G-6** | Track long-term sensor drift (Objective 6) to forecast maintenance calibration schedules | Predictive Ops |
+| **G-7** | Impute damaged parameters from healthy cross-correlated channels upon confirmed defect | Data Quality |
+| **G-8** | Deliver a polished 3D Digital Twin with automatic culprit camera auto-focus | Visualization |
 
-### 3.2 Non-Goals (Explicitly Out of Scope for MVP)
+### 3.2 Non-Goals (Out of Scope for MVP)
 
-- ❌ Physical hardware integration (no LoRaWAN, no RS-485, no real AWS units)
-- ❌ Weather *forecasting* — this is data *integrity* monitoring, not prediction
-- ❌ Multi-tenant / multi-organization auth and billing
-- ❌ Regulatory certification (WMO/IMD compliance audits)
-- ❌ Mobile native apps
-- ❌ Automated model retraining in production (MVP is recommendation-only; a human applies changes)
+- ❌ General weather forecasting (focus is strictly data integrity and quality assurance)
+- ❌ Non-deterministic LLM chat agents in the critical alerting loop (replaced by deterministic Confluence Matrix)
+- ❌ Multi-tenant commercial billing infrastructure
+- ❌ Autonomous automated physical actuator recalibration without operator verification
 
 ### 3.3 Success Metrics
 
-| Metric | Target | Measurement Method |
+| Metric | Target | Verification Method |
 |---|---|---|
-| **PR-AUC** | > 0.90 | Held-out test set, 5-fold CV mean |
-| **Inference latency (p95)** | < 50 ms | ONNX Runtime, single vCPU, 60-sample window |
-| **False Alarm Rate reduction** | ≥ 80% | Alerts/hour vs. static IMD baseline over 7-day simulated run |
-| **Recall @ operating threshold** | ≥ 0.92 | Test set |
-| **SSE update frequency** | 1 Hz, jitter < 100 ms | Client-side timestamp delta histogram |
-| **SSE reconnection** | < 5 s recovery, exponential backoff | Chaos test: 10 forced disconnects |
-| **Model artifact size** | < 500 KB (quantized) | Post-training INT8 quantization |
-| **Cold start (edge)** | < 2 s | Container start → first inference |
-| **Feedback loop round-trip** | < 60 s | Operator click → Supabase row → DBSCAN recommendation |
+| **Edge Memory Footprint** | $< 120\,\text{KB}$ Flash, $< 48\,\text{KB}$ SRAM | TFLite Micro build size profiling |
+| **Edge Filter Latency** | $< 15\,\text{ms}$ on ESP32 @ 240 MHz | Hardware timer benchmarks |
+| **Model A Recall (Storms)** | $\ge 96.0\%$ | Held-out IMD extreme event validation set |
+| **Model B Precision (Faults)** | $\ge 94.0\%$ | Synthetic fault injection test suite |
+| **Confluence F1-Score** | $\ge 0.92$ | Multi-scenario benchmark matrix |
+| **Maintenance Horizon** | $\ge 14$ days advance notice on sensor drift | 30-day cumulative residual drift simulation |
+| **Imputation MAE** | $T \le 0.6^\circ\text{C}$, $RH \le 4.5\%$, $P \le 0.8\,\text{hPa}$ | Cross-validation against ground-truth weather series |
 
 ---
 
-## 4. Personas & User Stories
+## 4. User Personas & Core User Stories
 
 ### 4.1 Personas
+- **Meera — IMD Field Station Operator**: Needs trustworthy, explainable alerts and maintenance forecasts to schedule site visits efficiently.
+- **Arjun — Systems & Data Engineer**: Needs bandwidth-efficient edge-to-cloud transport and reliable MQTT plumbing.
+- **Dr. Rao — Meteorologist / QA Lead**: Needs scientific justification for flagged data and imputed values to maintain downstream forecast model inputs.
 
-| Persona | Description | Primary Need |
-|---|---|---|
-| **Meera — IMD Field Operator** | Monitors 40 AWS units from a control room. Non-ML expert. | Trustworthy, explainable alerts she can act on in <30 seconds |
-| **Arjun — Data Engineer** | Maintains ingestion pipelines and broker uptime. | Observable, debuggable, standards-based (MQTT) plumbing |
-| **Dr. Rao — Meteorologist / Reviewer** | Validates whether flagged data should be discarded. | Physical plausibility reasoning + attribution evidence |
-| **Recruiter / Reviewer (Portfolio)** | Evaluates engineering depth from a public repo + demo video. | Clear architecture, real metrics, polished UI |
-
-### 4.2 User Stories
-
-**Ingestion & Detection**
-- **US-01** — As an operator, I want physically impossible readings flagged instantly so I can discard them before they pollute downstream models.
-- **US-02** — As an operator, I want anomalies detected even when no single parameter breaches a hard limit, so that silent drift is caught.
-- **US-03** — As an operator, I want to see *which* sensor caused the flag, so I know what to inspect.
-
-**Explainability & Trust**
-- **US-04** — As a meteorologist, I want SHAP-style attribution per channel so I can validate the model's reasoning.
-- **US-05** — As an operator, I want a confidence score alongside each alert so I can triage by severity.
-
-**Feedback & Adaptation**
-- **US-06** — As an operator, I want to mark an alert as "Confirmed Fault" or "False Alarm" in one click.
-- **US-07** — As an operator, I want the system to periodically suggest threshold adjustments based on my feedback.
-- **US-08** — As a data engineer, I want feedback older than 7 days auto-purged to control storage cost and privacy surface.
-
-**Demo & Visualization**
-- **US-09** — As a demo viewer, I want a live 3D Digital Twin that reacts to telemetry in real time.
-- **US-10** — As a demo operator, I want to inject faults on demand (spike, drift, stuck-at) to prove detection works.
-- **US-11** — As a portfolio reviewer, I want a public README, architecture diagram, and benchmark table.
+### 4.2 Key User Stories
+- **US-01 (Edge Filtering)**: As an edge node, I want to filter normal data locally and transmit context buffers only on anomalies to save wireless bandwidth.
+- **US-02 (Confluence Reasoning)**: As an operator, I want natural weather events separated from sensor defects with an explicit confidence score so I never panic during true thunderstorms.
+- **US-03 (Explainability)**: As an operator, I want SHAP attribution bars and a natural-language report telling me exactly why a sensor was flagged.
+- **US-04 (Predictive Maintenance)**: As a maintenance planner, I want to see sensors marked "At Risk" with estimated days to recalibration before they fail completely.
+- **US-05 (Imputation)**: As a meteorologist, I want the system to suggest an imputed replacement value for faulty readings derived from healthy correlated sensors.
 
 ---
 
-## 5. Scope
+## 5. Scope & System Architecture
 
-### 5.1 MVP Scope (Must Have)
-
-| # | Capability | Deliverable |
-|---|---|---|
-| 1 | Virtual Edge Simulator UI | Web app generating synthetic T/P/RH telemetry at 1 Hz |
-| 2 | MQTT transport | TLS-secured MQTT to Azure-hosted Mosquitto |
-| 3 | IMD Pre-Filter | Deterministic rule engine, ~12 hardcoded rules |
-| 4 | 1D-CNN Autoencoder | PyTorch training + ONNX export, quantized |
-| 5 | Baselines | K-Means + Decision Tree with identical eval harness |
-| 6 | SHAP Explainability | Per-window, per-channel attribution |
-| 7 | Active Learning Loop | Supabase feedback table + DBSCAN recommender |
-| 8 | Next.js UI | Digital Twin, SSE live feed, Injector, Feedback panel |
-
-### 5.2 Post-MVP / Stretch (Nice to Have)
-
-- LSTM/Transformer autoencoder comparison
-- Multi-station federated learning
-- Real AWS hardware bridge (Modbus/RS-485 → MQTT)
-- Grafana/Power BI ops dashboard
-- Automated threshold application (closed-loop write-back)
-- ONNX Runtime Web / WASM in-browser inference demo
-- Docker Compose one-command local spin-up
-- Public leaderboard of fault-injection scenarios
-
-### 5.3 Out of Scope
-
-Refer to §3.2.
-
----
-
-## 6. System Architecture
-
-### 6.1 High-Level Architecture
+### 5.1 Architecture Diagram
 
 ```mermaid
-flowchart LR
-    subgraph EDGE["Virtual Edge (Browser)"]
-        SIM["Simulator UI<br/>T/P/RH @ 1 Hz"]
-        INJ["Fault Injector<br/>spike/drift/stuck/noise"]
-        SIM --> INJ
+flowchart TD
+    subgraph L1["1.0 Edge Device Layer (ESP32 Deployment)"]
+        SENS["Sensors (T, P, RH)"] --> R11["1.1 IMD Plausibility Check (Logical Filter)"]
+        R11 -->|Pass Range| ML12["1.2 Quantized PyOD (Lightweight Outlier Detection)<br/>Quantized TFLite Micro Model"]
+        R11 -->|Fail Extreme Limit| ED13{"Edge Decision"}
+        ML12 --> ED13
+        ED13 -->|Normal Data| STORE13[("Local Data Store<br/>(Minimal Rolling Buffer)")]
+        ED13 -->|Flagged Anomaly| TX13["Transmit Context Data<br/>(Trigger + Multi-Hour Window)"]
     end
 
-    subgraph BROKER["Azure Cloud"]
-        MQ["Mosquitto Broker<br/>TLS :8883"]
-        API["Ingestion Service<br/>FastAPI"]
-        PRE["IMD Pre-Filter"]
-        ML["1D-CNN Autoencoder<br/>ONNX Runtime"]
-        SHAP["SHAP Explainer"]
-        SSE["SSE Broadcaster"]
+    subgraph L2["2.0 Cloud Analytics Layer"]
+        TX13 -->|MQTT Incident Payload| AN21["2.1 Multi-Scale Multivariate Analyzer"]
+        AN21 --> ST21["Short-term Multivariate Analysis"]
+        AN21 --> LT21["Long-term Temporal/Seasonal Analysis"]
+        
+        ST21 --> MODA["Model A (Weather Classifier)"]
+        ST21 --> MODB["Model B (Sensor Defect Classifier)<br/>Trained on Synthetic Fault Injections"]
+        
+        MODA --> CONF23["2.3 Classification Confluence & Confidence Scoring<br/>(Decision Matrix)"]
+        MODB --> CONF23
+        
+        CONF23 --> XAI24["2.4 Explainable AI (XAI) Hub<br/>(SHAP Feature Importance & Text Justification)"]
+        LT21 --> XAI24
     end
 
-    subgraph DATA["Persistence"]
-        SB[("Supabase<br/>feedback, 7-day TTL")]
-        BLOB[("Azure Blob<br/>model artifacts")]
+    subgraph L3["3.0 Visualization & Alerting Layer (Operator Dashboard)"]
+        CONF23 --> ALERT32["3.2 Alerting System<br/>• Real-Time Anomaly Alert<br/>• Classification: Sensor Defect<br/>• Severity: High | Confidence: 92%"]
+        XAI24 --> REP33["3.3 Explainable Report Viewer<br/>• Text Justification<br/>• Visual Justification (SHAP Importance Bars)"]
+        LT21 --> PRED34["3.4 Sensor Health & Predictions<br/>• Sensor Health: At Risk<br/>• Maintenance: Calibration due < 2 Weeks"]
+        CONF23 -.->|Defect Confirmed| IMP35["3.5 Imputation & Correction Module<br/>(Multivariate LSTM / Regression)"]
+        ALERT32 --> TWIN["Next.js 3D Digital Twin<br/>(Interactive Procedural Model)"]
     end
 
-    subgraph CLIENT["Next.js App"]
-        TWIN["Three.js Digital Twin"]
-        FEED["Live SSE Feed"]
-        FB["Operator Feedback Panel"]
-    end
+    style L1 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style L2 fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style L3 fill:#ede7f6,stroke:#4a148c,stroke-width:2px
+```
 
-    INJ -->|MQTT/TLS| MQ
-    MQ --> API
-    API --> PRE
-    PRE -->|pass| ML
-    PRE -->|hard fail| SSE
-    ML --> SHAP
-    SHAP --> SSE
-    SSE --> FEED
-    SSE --> TWIN
-    FB -->|REST| API
-    API --> SB
-    SB -->|DBSCAN job| ML
-    BLOB --> ML
+### 5.2 Deliverables Breakdown
+
+| Layer | Component | Status / Deliverable |
+|---|---|---|
+| **1.0 Edge** | 1.1 IMD Plausibility Check | C++ / Python rule implementation checking climatological and rate bounds |
+| **1.0 Edge** | 1.2 Quantized PyOD | INT8 TFLite Micro model / Quantized Autoencoder |
+| **1.0 Edge** | 1.3 Context Buffer Transmission | Circular buffer sending flagged telemetry + 2–4 hr pre-anomaly context |
+| **2.0 Cloud** | 2.1 Multi-Scale Analyzer | Short-term cross-derivative tensor + long-term diurnal baseline engine |
+| **2.0 Cloud** | 2.2 Model A & Model B | LightGBM / 1D-CNN classifiers (Model B trained with synthetic fault injections) |
+| **2.0 Cloud** | 2.3 Classification Confluence | Deterministic decision matrix with confidence scoring formula |
+| **2.0 Cloud** | 2.4 Explainable AI Hub | SHAP attribution generator + natural-language report creator |
+| **3.0 Dashboard** | 3.2 Alerting System | Live classification badge, severity rating, confidence score |
+| **3.0 Dashboard** | 3.3 Report Viewer | Formatted plain-English summary + interactive SHAP bar chart |
+| **3.0 Dashboard** | 3.4 Sensor Health & Predictions | EWMA drift tracker projecting days until calibration is due |
+| **3.0 Dashboard** | 3.5 Imputation & Correction | Multivariate LSTM / regression model providing suggested replacement values |
+| **3.0 Dashboard** | 3D Digital Twin | Next.js 14 / Three.js interactive station with camera auto-targeting |

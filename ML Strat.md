@@ -1,531 +1,334 @@
-# End-to-End ML Pipeline for Sensor Anomaly Detection
+# End-to-End ML Strategy: Split-Edge/Cloud Anomaly Detection & Telemetry Quality Assurance
 
-**Project:** Real-Time IoT Weather Telemetry Anomaly Detection
-**Stack:** MQTT Edge Simulator → Feature Buffer → Hybrid Rule + Deep Learning Engine → SHAP Explainability → Operator Feedback Loop
-**Owner:** ML / Anomaly Detection Team
-**Version:** 1.0 (Design Spec)
+**Project:** SkyGuard AI — Automatic Weather Station (AWS) Telemetry Integrity  
+**Stack:** ESP32 Edge (TFLite Micro / PyOD) ➔ MQTT Context Burst ➔ Cloud FastAPI ➔ Multi-Scale Analyzer ➔ Dual-Model Confluence (Weather vs. Defect) ➔ SHAP XAI Hub ➔ Predictive Maintenance & Imputation  
+**Version:** 2.0 (Design & Machine Learning Specification)  
+**Status:** Approved for Build  
 
 ---
 
 ## Table of Contents
 
-1. [Executive Summary](#1-executive-summary)
-2. [System Architecture](#2-system-architecture)
-3. [Data Preprocessing & Feature Engineering](#3-data-preprocessing--feature-engineering)
-4. [Model Progression: Baseline → Deep Learning](#4-model-progression-baseline--deep-learning)
-5. [Primary Engine: 1D-CNN Autoencoder](#5-primary-engine-1d-cnn-autoencoder)
-6. [Explainability & Active Learning Loop](#6-explainability--active-learning-loop)
-7. [Deployment Topology](#7-deployment-topology)
-8. [Evaluation & Metrics](#8-evaluation--metrics)
-9. [Implementation Roadmap](#9-implementation-roadmap)
-10. [Appendix: Thresholds & Config Reference](#10-appendix-thresholds--config-reference)
+1. [Executive Summary & Core Principles](#1-executive-summary--core-principles)
+2. [End-to-End ML Pipeline Architecture](#2-end-to-end-ml-pipeline-architecture)
+3. [Edge Device Layer (1.0 — ESP32 Deployment)](#3-edge-device-layer-10--esp32-deployment)
+4. [Cloud Analytics Layer (2.0 — Deep Multi-Scale Reasoning)](#4-cloud-analytics-layer-20--deep-multi-scale-reasoning)
+5. [Dual-Model Classification & Reasoning (Model A vs. Model B)](#5-dual-model-classification--reasoning-model-a-vs-model-b)
+6. [Synthetic Fault Injection Methodology for Model B](#6-synthetic-fault-injection-methodology-for-model-b)
+7. [Classification Confluence & Confidence Scoring](#7-classification-confluence--confidence-scoring)
+8. [Explainable AI (XAI) Hub & Text Justification](#8-explainable-ai-xai-hub--text-justification)
+9. [Long-Term Drift Monitoring & Predictive Maintenance (3.4)](#9-long-term-drift-monitoring--predictive-maintenance-34)
+10. [Imputation & Correction Module (3.5)](#10-imputation--correction-module-35)
+11. [Evaluation Metrics & Benchmark Targets](#11-evaluation-metrics--benchmark-targets)
+12. [Configuration Reference (`config/ml_pipeline.yaml`)](#12-configuration-reference-configml_pipelineyaml)
 
 ---
 
-## 1. Executive Summary
+## 1. Executive Summary & Core Principles
 
-The pipeline ingests raw weather telemetry (Temperature, Humidity, Pressure, Wind, etc.) over MQTT and identifies two distinct classes of failure:
+Conventional Automatic Weather Station (AWS) monitoring fails in real-world deployments because static IMD single-parameter limits cannot detect subtle physical degradations (such as slow capacitive drift or cross-channel decoupling), while pure cloud deep learning saturates low-bandwidth cellular/satellite uplinks.
 
-| Failure Class | Example | Detector |
-|---|---|---|
-| **Hard physical errors** | RH = 130%, ΔTemp = 8°C in 10 min | Stage 1 Rule Filter (deterministic) |
-| **Soft / multivariate anomalies** | Sensor drift, cross-feature decoupling, sunrise-bias | Stage 2 1D-CNN Autoencoder |
+SkyGuard AI's Machine Learning Strategy addresses these realities through **four key pillars**:
 
-The guiding design principle is **two-stage filtering**: cheap, deterministic rules eliminate obvious impossibilities so that the expensive neural inference and SHAP explanation budget is spent only on genuinely ambiguous windows. Every alert is explainable (SHAP), and every false positive is fed back into a DBSCAN clustering loop that recommends threshold and feature-mask updates to the operator.
-
----
-
-## 2. System Architecture
-
-### 2.1 High-Level Pipeline
-
-```mermaid
-graph TD
-    A[Raw MQTT Telemetry Stream] --> B[Data Preprocessing & Gap Fill]
-    B --> C{Stage 1: IMD/WMO Rule Filter}
-
-    C -->|Fails Climatological Limits| D[Flag: Hard Physical Error]
-    C -->|Fails Step/Rate Limits| D
-
-    C -->|Passes Rules| E[Feature Engineering Buffer<br/>12 timesteps x N features]
-
-    E --> F{Stage 2: ML Inference}
-    F -->|Baseline Comparators| G[K-Means State Classifier<br/>+ Decision Tree]
-    F -->|Primary Engine| H[1D-CNN Autoencoder]
-
-    H --> I{Reconstruction Error > Threshold?}
-    I -->|No| J[Log as Normal]
-    I -->|Yes| K[SHAP DeepExplainer]
-
-    K --> L[Rank Feature Contributions]
-    L --> M[Dashboard Alert + Plain-English Diagnostic]
-
-    M -.->|Operator Flags False Positive| N[Extract Latent Vector Z]
-    N --> O[DBSCAN Clustering over Z]
-    O -.->|Recurrent Pattern Found| P[Recommend Threshold / Feature Mask Update]
-    P -.-> C
-
-    style A fill:#e3f2fd,stroke:#1976d2
-    style D fill:#ffcdd2,stroke:#c62828
-    style H fill:#c8e6c9,stroke:#2e7d32
-    style K fill:#fff9c4,stroke:#f9a825
-    style O fill:#f3e5f5,stroke:#7b1fa2
-```
-
-### 2.2 Design Rationale
-
-- **Stage 1 is free.** A few arithmetic comparisons reject ~70% of gross faults before any model runs.
-- **Stage 2 is stateless per window.** The CNN evaluates 12-step windows; no global state is carried between inferences, which makes edge deployment trivial.
-- **SHAP is gated.** It only runs on flagged windows, keeping compute under the 50 ms budget.
-- **Feedback is asynchronous.** The DBSCAN loop runs as a background job — it never blocks the live alert path.
-
-### 2.3 Alert Lifecycle State Machine
-
-```mermaid
-stateDiagram-v2
-    [*] --> Ingested
-    Ingested --> RuleRejected: Stage 1 fails
-    Ingested --> Buffered: Stage 1 passes
-    Buffered --> Inferred: Window full (12 steps)
-    Inferred --> Normal: error <= threshold
-    Inferred --> Flagged: error > threshold
-    Flagged --> Explained: SHAP runs
-    Explained --> Alerted: Dashboard shown
-    Alerted --> Resolved: Operator ACK
-    Alerted --> FalsePositive: Operator flags
-    FalsePositive --> LatentQueued: z pushed to DBSCAN buffer
-    LatentQueued --> ThresholdReview: cluster density > eps_min
-    ThresholdReview --> [*]
-    Resolved --> [*]
-    RuleRejected --> [*]
-    Normal --> [*]
-```
+| Pillar | Rationale & Implementation |
+|---|---|
+| **Split-Architecture Deployment** | Full LLM or heavy deep learning models cannot run on an ESP32 due to RAM/Flash limits. The system deploys a quantized, minimalist model on the Edge for instant filtering, transmitting context-rich packet bursts to the Cloud only upon anomaly detection. |
+| **Dual-Model Structured Reasoning** | Replaces unstructured LLM agent chats with a deterministic **Classification Confluence Matrix** driven by two specialized classifiers: **Model A (Weather Classifier)** and **Model B (Sensor Defect Classifier)**. |
+| **Synthetic Defect Generation** | Because real-world sensor defect datasets with diverse failure modes do not exist, Model B is rigorously trained using mathematically formulated synthetic fault injection (frozen flatlines, spikes, drift, Gaussian noise, dropouts) layered onto clean IMD weather baselines. |
+| **Full Lifecycle Assurance** | Goes beyond detection to provide **Explainable AI (SHAP)**, **Predictive Maintenance** (forecasting calibration deadlines from cumulative drift), and **Automated Imputation** (reconstructing damaged readings from healthy correlated sensors). |
 
 ---
 
-## 3. Data Preprocessing & Feature Engineering
-
-### 3.1 Ingestion Assumptions
-
-- **Sampling cadence:** 1 reading / 10 minutes per sensor node.
-- **Transport:** MQTT topic per station, e.g. `weather/{station_id}/telemetry`.
-- **Schema (raw):** `ts, station_id, T, RH, P, wind_speed, wind_dir, rainfall`.
-
-### 3.2 Missing Packet Handling
-
-The edge simulator may drop packets. To keep the CNN window intact:
-
-```python
-def forward_fill(packet, last_valid):
-    if packet is None or packet.is_nan():
-        return last_valid, drop_flag=True
-    return packet, drop_flag=False
-```
-
-- **Forward-fill** the last valid reading, but **attach a `drop_flag` feature** so the autoencoder learns to expect imputed rows and doesn't flag them as anomalies.
-- If more than **3 consecutive packets** are dropped, mark the window `stale` and skip inference — this is a connectivity alert, not a sensor anomaly.
-
-### 3.3 Rolling Window Construction
-
-Each inference consumes a **12-step rolling window** = **2 hours of history** at 10-minute resolution.
-
-```
-Input tensor shape: (batch_size, 12, num_features)
-```
+## 2. End-to-End ML Pipeline Architecture
 
 ```mermaid
-graph LR
-    subgraph "Sliding Window (t = now)"
-    T1[t-11] --> T2[t-10] --> T3[...] --> T12[t]
+flowchart TD
+    subgraph EDGE["1.0 Edge Device Layer (ESP32 / TFLite Micro)"]
+        RAW["Raw Telemetry (T, P, RH) @ 1 Hz"] --> R11["1.1 IMD Plausibility Check<br/>(Deterministic Logical Filter)"]
+        R11 -->|Passed| Q12["1.2 Quantized PyOD / TFLite Micro<br/>(Quantized Micro Autoencoder)"]
+        R11 -->|Failed| DEC13{"Edge Decision"}
+        Q12 --> DEC13
+        DEC13 -->|Normal| BUF13[("Local Rolling Buffer<br/>(Minimal SRAM Storage)")]
+        DEC13 -->|Flagged Anomaly| TX13["Transmit Context Burst<br/>(Incident + 2-4 Hr History)"]
     end
-    T12 --> CNN[1D-CNN Autoencoder]
-    style CNN fill:#c8e6c9,stroke:#2e7d32
+
+    subgraph CLOUD["2.0 Cloud Analytics Layer (FastAPI Core)"]
+        TX13 -->|MQTT Uplink| MSA21["2.1 Multi-Scale Multivariate Analyzer"]
+        MSA21 --> ST21["Short-Term Consistency<br/>(Cross-Derivatives dT/dt, dP/dt, dRH/dt)"]
+        MSA21 --> LT21["Long-Term Temporal Analysis<br/>(Diurnal Harmonics & Residual Drift)"]
+
+        ST21 --> MODA["Model A: Weather Classifier<br/>P(Weather Event)"]
+        ST21 --> MODB["Model B: Sensor Defect Classifier<br/>P(Sensor Failure Type)"]
+
+        MODA --> CONF23["2.3 Classification Confluence & Confidence Scoring<br/>(Decision Matrix)"]
+        MODB --> CONF23
+
+        CONF23 --> XAI24["2.4 Explainable AI (XAI) Hub"]
+        LT21 --> XAI24
+        XAI24 --> SHAP["SHAP Attribution Bars"]
+        XAI24 --> TEXT["Natural Language Justification"]
+    end
+
+    subgraph DASHBOARD["3.0 Visualization & Operational Assurance Layer"]
+        CONF23 --> ALERT32["3.2 Real-Time Alerting<br/>Classification: Sensor Defect | Confidence: 92%"]
+        XAI24 --> REP33["3.3 Explainable Report Viewer"]
+        LT21 --> PRED34["3.4 Sensor Health & Predictive Maintenance<br/>Calibration due < 2 Weeks (EWMA Drift)"]
+        CONF23 -.->|Defect Confirmed| IMP35["3.5 Imputation & Correction Module<br/>Multivariate LSTM / Regression (T_corr = 24.5°C)"]
+    end
+
+    style EDGE fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style CLOUD fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style DASHBOARD fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
 ```
-
-### 3.4 Feature Set
-
-| # | Feature | Formula / Source | Purpose |
-|---|---|---|---|
-| 1 | `T` | raw | Temperature |
-| 2 | `RH` | raw | Relative humidity |
-| 3 | `P` | raw | Barometric pressure |
-| 4 | `Td` | Magnus: `Td = (b·α)/(a−α)`, `α = ln(RH/100) + aT/(b+T)` | Dew point — physical consistency |
-| 5 | `dT/dt` | `T[t] − T[t−1]` | Rate of change |
-| 6 | `dP/dt` | `P[t] − P[t−1]` | Pressure tendency |
-| 7 | `dRH/dt` | `RH[t] − RH[t−1]` | Humidity velocity |
-| 8 | `ΔT_spatial` | `T_station − T_neighbor` | Spatial consistency |
-| 9 | `drop_flag` | 0/1 | Marks forward-filled rows |
-
-> **Why derivatives as explicit features?** CNNs are good at local pattern extraction but poor at signed differences across distant timesteps. Handing them `dT/dt` directly shortens the learning curve and makes SHAP attribution interpretable ("this alert was driven by dP/dt").
-
-### 3.5 Scaling
-
-Fit a **`RobustScaler`** (median + IQR) on the **normal baseline dataset only**.
-
-```python
-from sklearn.preprocessing import RobustScaler
-scaler = RobustScaler().fit(normal_baseline_df[FEATURES])
-joblib.dump(scaler, "gs://weather-anomaly/artifacts/scaler.pkl")
-```
-
-- RobustScaler is chosen because weather has heavy-tailed extremes; standard z-scoring would compress the very anomalies we want to detect.
-- **Never refit on production data** — that would silently drift the model's notion of "normal."
 
 ---
 
-## 4. Model Progression: Baseline → Deep Learning
+## 3. Edge Device Layer (1.0 — ESP32 Deployment)
 
-> **Principle:** Ship a working MVP on day one, and create a mathematical benchmark that justifies the CNN.
+### 3.1 1.1 IMD Plausibility Check (Logical Filter)
+- **Role**: Zero-cost, instantaneous boundary enforcement executing in $< 0.1\,\text{ms}$ on an ESP32 CPU.
+- **Ruleset**:
+  - Climatological Absolute Limits: $-5^\circ\text{C} \le T \le 55^\circ\text{C}$, $0\% \le RH \le 100\%$, $900\,\text{hPa} \le P \le 1060\,\text{hPa}$.
+  - Thermodynamic Dew Point Sanity: $T_d = \frac{b \cdot \alpha}{a - \alpha} \le T + 0.5^\circ\text{C}$ (where $\alpha = \ln(RH/100) + \frac{aT}{b+T}$, $a=17.27, b=237.7$).
+  - Instantaneous Step Limits: $|\Delta T| \le 5.0^\circ\text{C} / \text{10 min}$, $|\Delta RH| \le 20.0\% / \text{10 min}$, $|\Delta P| \le 3.5\,\text{hPa} / \text{10 min}$.
 
-### 4.1 Stage 1 — IMD/WMO Hard Rules (Day 1)
+### 3.2 1.2 Quantized PyOD (Lightweight Outlier Detection)
+- **Model**: Quantized INT8 Autoencoder or Elliptic Envelope trained on normal 3-parameter ($T, P, RH$) 12-sample sliding windows.
+- **Hardware Footprint**: Model size $< 95\,\text{KB}$, RAM consumption $< 48\,\text{KB}$ SRAM, inference latency $< 15\,\text{ms}$ on ESP32 at 240 MHz.
+- **Scoring**:
+  $$\text{Reconstruction Error } (E) = \frac{1}{12 \times 3} \sum_{t=1}^{12} \sum_{i \in \{T, P, RH\}} (x_{t,i} - \hat{x}_{t,i})^2$$
+  If $E > \tau_{\text{edge}}$ (where $\tau_{\text{edge}}$ is calibrated to the 99.0th percentile of normal training validation error), the window is flagged.
 
-Deterministic, explainable, zero-cost. Implemented as a rule table loaded from config.
+### 3.3 1.3 Edge Decision & Context Transmission
+- **Normal Telemetry**: Appended to a circular flash/SRAM buffer; a compressed heartbeat is emitted at low cadence (every 10–15 minutes).
+- **Flagged Telemetry**: Triggers an immediate MQTT **Incident Packet** containing the anomalous reading, the trigger flag, and the preceding 2 to 4 hours of uncorrupted historical sliding buffer to provide full context for cloud evaluation.
 
-| Check | Threshold | Action |
-|---|---|---|
-| RH physical bound | `RH > 100%` or `RH < 0%` | Hard error |
-| Temp step | `|ΔT| > 0.3 °C / 10 min` | Hard error |
-| RH step | `|ΔRH| > 3 % / 10 min` | Hard error |
-| Pressure step | `|ΔP| > 0.3 hPa / 10 min` | Hard error |
-| Temp spike | `ΔT > 5 °C / 10 min` | Hard error |
-| Dew point sanity | `Td > T + 0.5` | Hard error (supersaturation) |
-| Frozen range | `RH == 0` for > 30 min | Stuck-sensor flag |
+---
 
-```python
-def stage1_rules(window, cfg):
-    last, prev = window[-1], window[-2]
-    if not (0 <= last.RH <= 100):
-        return "HARD_RH_BOUND"
-    if abs(last.T - prev.T) > cfg.DT_STEP:
-        return "HARD_T_STEP"
-    if abs(last.P - prev.P) > cfg.DP_STEP:
-        return "HARD_P_STEP"
-    if last.Td > last.T + 0.5:
-        return "HARD_SUPERSATURATION"
-    return None
+## 4. Cloud Analytics Layer (2.0 — Deep Multi-Scale Reasoning)
+
+### 4.1 2.1 Multi-Scale Multivariate Analyzer
+Flagged context packets arriving at the cloud are processed across two complementary time horizons:
+
+1. **Short-Term Multivariate Consistency (12 Timesteps = 2 Hours)**:
+   - Computes first and second numerical derivatives: $dT/dt$, $dP/dt$, $dRH/dt$, $d^2P/dt^2$.
+   - Computes thermodynamic coupling:
+     $$\text{Coupling Coefficient } \rho_{T,RH} = \text{Corr}(T_{[t-11:t]}, RH_{[t-11:t]})$$
+     In physical atmospheres, $T$ and $RH$ are strongly anti-correlated ($\rho < -0.6$). Decoupling where $\rho \to 0$ or $\rho > 0$ during non-condensing periods strongly indicates transducer failure.
+2. **Long-Term Temporal/Seasonal Analysis (7–30 Days)**:
+   - Performs harmonic decomposition of the diurnal solar cycle.
+   - Compares current baseline against regional climatological expectations and spatial neighbor stations to establish baseline residual error.
+
+---
+
+## 5. Dual-Model Classification & Reasoning (Model A vs. Model B)
+
+Rather than using an unstructured conversation between LLMs, the system employs two specialized supervised classifiers evaluated via a structured Confluence Decision Matrix.
+
+```
+Incoming Multivariate Context Tensor (12 x 9 Features)
+                  │
+        ┌─────────┴─────────┐
+        ▼                   ▼
+┌──────────────────┐ ┌──────────────────┐
+│     Model A      │ │     Model B      │
+│Weather Classifier│ │ Defect Classifier│
+└────────┬─────────┘ └────────┬─────────┘
+         │ P(Weather)         │ P(Defect)
+         └─────────┬──────────┘
+                   ▼
+┌──────────────────────────────────────┐
+│  2.3 Classification Confluence &     │
+│       Confidence Scoring Matrix      │
+└──────────────────┬───────────────────┘
+                   ▼
+┌──────────────────────────────────────┐
+│   Final Status + Confidence Score    │
+└──────────────────────────────────────┘
 ```
 
-### 4.2 Stage 1.5 — Baseline ML Comparators
+### 5.1 Model A: Weather Classifier
+- **Architecture**: Gradient Boosted Trees (LightGBM) or 1D-CNN.
+- **Target Classes**: `[NOMINAL_DIURNAL, SQUALL_LINE, SEVERE_THUNDERSTORM, HEATWAVE, RADIATION_FOG, COLD_FRONT]`.
+- **Training Source**: Clean historical IMD observations containing verified meteorological events.
+- **Key Signal**: Correlated multi-sensor dynamics (e.g., sharp pressure drop synchronized with sudden wind increase, rapid cooling, and humidity spike).
+- **Primary Output**: $P(\text{Weather}) \in [0.0, 1.0]$.
 
-| Model | Role | Why |
-|---|---|---|
-| **Decision Tree** (depth ≤ 4) | Catches simple threshold breaches missed by rules | Fully interpretable, gives a benchmark F1 |
-| **K-Means (k=6)** | Defines distinct "normal weather states" (clear day, rain, fog, front passage, etc.) | Distance-to-centroid becomes a cheap anomaly score |
+### 5.2 Model B: Sensor Defect Classifier
+- **Architecture**: Specialized Multi-Class Classifier (LightGBM / 1D-CNN).
+- **Target Classes**: `[NO_DEFECT, FROZEN_VALUE, IMPULSE_SPIKE, NOISE_BURST, CALIBRATION_DRIFT, PACKET_DROPOUT]`.
+- **Training Strategy**: Trained on clean data with **mathematically injected synthetic fault signatures** (see Section 6).
+- **Key Signal**: Uncorrelated single-channel anomalies, unnatural derivative flatlines, or high-frequency variance lacking thermodynamic backing.
+- **Primary Output**: $P(\text{Defect}) \in [0.0, 1.0]$ and predicted fault archetype.
 
-These do **not** replace the CNN. They provide:
-1. A **fallback** if the CNN is offline.
-2. A **lower bound** on performance — the CNN must beat them to justify its complexity.
+---
 
-### 4.3 Stage 2 — Primary 1D-CNN Autoencoder
+## 6. Synthetic Fault Injection Methodology for Model B
 
-See [Section 5](#5-primary-engine-1d-cnn-autoencoder).
+Because true operational weather station defect logs with comprehensive multi-channel failure ground truth are practically non-existent, Model B is trained by superimposing synthetic failure patterns onto clean weather series $x_i(t)$:
 
-### 4.4 Model Comparison Matrix
+```python
+# Mathematical formulations for synthetic defect injection
+```
 
-| Model | Latency | Explainability | Multivariate? | Deploy Stage |
+### 6.1 Frozen / Flatline Defect (`FROZEN_VALUE`)
+Simulates an ADC freeze or mechanical sensor hang where the channel remains locked at value $c$:
+$$x_{\text{frozen}}(t) = x(t_{\text{freeze}}), \quad \forall t \in [t_{\text{freeze}}, t_{\text{freeze}} + \Delta t]$$
+- **Characteristics**: $d x / dt \equiv 0$ across $\ge 6$ timesteps while correlated parameters undergo natural diurnal fluctuation.
+
+### 6.2 Impulse Spike Defect (`IMPULSE_SPIKE`)
+Simulates voltage transients, EMI, or electrostatic discharge:
+$$x_{\text{spike}}(t) = x(t) + \delta \cdot \text{sgn}(\xi), \quad \delta \sim \mathcal{U}(3\sigma_i, 6\sigma_i)$$
+- **Characteristics**: Extreme 1–2 step excursion with immediate return to baseline; physically impossible acceleration $d^2 x / dt^2$.
+
+### 6.3 Gaussian Noise Burst (`NOISE_BURST`)
+Simulates degraded wire connections, water ingress, or loose terminal grounding:
+$$x_{\text{noisy}}(t) = x(t) + \epsilon(t), \quad \epsilon(t) \sim \mathcal{N}(0, \sigma_{\text{fault}}^2), \quad \sigma_{\text{fault}} = 3 \times \sigma_{\text{nominal}}$$
+- **Characteristics**: Abnormal high-frequency spectral energy on a single sensor channel with zero coherence on neighboring channels.
+
+### 6.4 Capacitive Calibration Drift (`CALIBRATION_DRIFT`)
+Simulates polymer degradation or dust deposition in humidity/temperature sensors:
+$$x_{\text{drift}}(t) = x(t) + \beta \cdot (t - t_0)$$
+where $\beta \in [\pm 0.05, \pm 0.25]^\circ\text{C}/\text{day}$ or $[\pm 0.5, \pm 2.0]\%\,\text{RH}/\text{day}$.
+- **Characteristics**: Cumulative divergence from diurnal harmonic baselines and spatial neighbor expectations.
+
+### 6.5 Intermittent Packet Dropout (`PACKET_DROPOUT`)
+Simulates failing radio transmission or bus collision:
+$$x_{\text{drop}}(t) = \text{NaN} \quad (\text{forward-filled with } \text{drop\_flag} = 1)$$
+
+---
+
+## 7. Classification Confluence & Confidence Scoring
+
+The Confluence Engine deterministically reconciles Model A and Model B predictions into an actionable decision:
+
+| Model A: $P(\text{Weather})$ | Model B: $P(\text{Defect})$ | Final System Classification | Severity | Dashboard Action |
 |---|---|---|---|---|
-| IMD Rules | < 1 ms | Native | No | Edge |
-| Decision Tree | < 5 ms | Native (tree paths) | Limited | Edge |
-| K-Means | < 10 ms | Moderate (centroid distance) | Yes | Edge |
-| **1D-CNN AE** | **~30 ms** | **SHAP** | **Yes** | **Edge / Cloud** |
-| SHAP | ~50 ms | Native (attribution) | Yes | Cloud (gated) |
+| $\ge 0.70$ | $< 0.30$ | **Natural Weather Event** | Nominal | Suppress alert; mark true-negative storm event |
+| $< 0.30$ | $\ge 0.70$ | **Sensor Defect** | High / Critical | Fire alarm, trigger SHAP, launch Imputation |
+| $\ge 0.70$ | $\ge 0.70$ | **Compound Weather + Sensor Anomaly** | Warning | Raise warning: extreme weather suspected to have damaged sensor |
+| $< 0.30$ | $< 0.30$ | **Uncertain / Ambiguous Anomaly** | Low / Info | Queue for operator active-learning triage |
+
+### Confidence Scoring Mathematical Formulation
+
+$$\text{Confidence} = \max\left(P(\text{Defect}), P(\text{Weather})\right) \times \left[ 1.0 - 0.25 \times \left(1.0 - |P(\text{Defect}) - P(\text{Weather})|\right) \right]$$
+
+- If both models are decisive and disagree (e.g., $P(\text{Defect}) = 0.95$ and $P(\text{Weather}) = 0.05$), the confluence penalty is minimal, yielding **Confidence = 92.6%**.
+- If both models are uncertain (e.g., $P(\text{Defect}) = 0.52$ and $P(\text{Weather}) = 0.48$), the penalty reduces confidence to **Confidence = 39.5%**, preventing unwarranted high-severity alerts.
 
 ---
 
-## 5. Primary Engine: 1D-CNN Autoencoder
+## 8. Explainable AI (XAI) Hub & Text Justification
 
-### 5.1 Architecture
+The XAI Hub eliminates "black box" distrust by presenting operators with mathematical attributions and clear natural-language justifications:
 
-```mermaid
-graph LR
-    IN["Input<br/>(12, 9)"] --> C1["Conv1D<br/>32 filters, k=3<br/>ReLU"]
-    C1 --> C2["Conv1D<br/>16 filters, k=3<br/>ReLU"]
-    C2 --> FL["Flatten"]
-    FL --> Z["Latent z<br/>(dim = 8)"]
-    Z --> D1["Dense<br/>16 x 12"]
-    D1 --> R1["Reshape<br/>(12, 16)"]
-    R1 --> DC1["Conv1DTranspose<br/>32 filters, k=3"]
-    DC1 --> OUT["Output<br/>(12, 9)"]
+### 8.1 SHAP Attribution Computation
+- **Method**: TreeExplainer (for GBDT) or GradientExplainer (for 1D-CNN) pre-fitted with 50 background normal reference windows.
+- **Latency**: Gated execution, running only on flagged confluence events ($< 35\,\text{ms}$).
+- **Output**: Relative percentage contributions across features:
+  $$C_i = \frac{\sum_{t=1}^{12} |\phi_{t,i}|}{\sum_{j} \sum_{t=1}^{12} |\phi_{t,j}|} \times 100\%$$
 
-    style Z fill:#fff9c4,stroke:#f9a825,stroke-width:2px
-    style IN fill:#e3f2fd,stroke:#1976d2
-    style OUT fill:#e3f2fd,stroke:#1976d2
-```
+### 8.2 Natural Language Justification Generator
+Rules combine the winning model, top SHAP features, and physical invariants into human-readable text:
+> *"Model B detected a FROZEN_VALUE defect on Relative Humidity with 94.2% confidence. RH remained locked at 88.0% for 3.5 consecutive hours while ambient temperature rose by 7.4°C. Model A confirms weather-induced invariance is highly improbable (P(Weather) = 0.04). Top SHAP contributor: Relative Humidity (78.4%)."*
 
-### 5.2 Design Choices
+---
 
-| Layer | Choice | Rationale |
+## 9. Long-Term Drift Monitoring & Predictive Maintenance (3.4)
+
+To fulfill Objective 6 (predicting maintenance before catastrophic failure occurs):
+
+### 9.1 Residual Tracking via EWMA
+For each sensor channel $i$, calculate daily residual bias $r_i(d)$ against diurnal harmonic models and spatial neighbors:
+$$r_i(d) = \frac{1}{144} \sum_{t=1}^{144} \left( x_{i}(t) - x_{i,\text{expected}}(t) \right)$$
+Update the Exponentially Weighted Moving Average:
+$$\text{EWMA}_i(d) = \lambda \cdot r_i(d) + (1 - \lambda) \cdot \text{EWMA}_i(d-1), \quad \lambda = 0.2$$
+
+### 9.2 Predictive Maintenance Forecasting
+When cumulative drift $|\text{EWMA}_i(d)|$ breaches the warning boundary $\tau_{\text{warn}} = 2.0\sigma$:
+1. Sensor status transitions to **"At Risk"**.
+2. Projected days until calibration deadline $\tau_{\text{fail}} = 3.5\sigma$:
+   $$\text{Days to Recalibration} = \max\left(1, \left\lfloor \frac{\tau_{\text{fail}} - |\text{EWMA}_i(d)|}{|d\,\text{EWMA}_i / dt|} \right\rfloor\right)$$
+3. The dashboard alerts operators: *"Pressure Sensor Calibration due in < 2 Weeks (projected 11 days remaining)."*
+
+---
+
+## 10. Imputation & Correction Module (3.5)
+
+When Model B and the Confluence Matrix confirm a sensor defect, the system prevents data loss in downstream numerical weather prediction models by estimating the missing or corrupted parameter.
+
+### 10.1 Model Architecture & Formulation
+- **Model**: Multivariate Bidirectional LSTM or ElasticNet / Ridge Regression.
+- **Input Vector**: Surviving healthy channels $x_{j \ne \text{faulty}}(t)$, temporal features (hour, solar elevation angle), and recent uncorrupted history:
+  $$\hat{x}_{\text{faulty}}(t) = f_{\text{impute}}\left(\{ x_{j}(t) \}_{j \ne \text{faulty}}, \sin(\omega t), \cos(\omega t), \mathbf{x}_{t-1}\right)$$
+- **Output**: Continuous suggested replacement value with a $95\%$ prediction interval:
+  $$\text{Observed } T_{\text{faulty}} = 38.0^\circ\text{C} \quad \Longrightarrow \quad \text{Imputed } \hat{T} = 26.2^\circ\text{C} \pm 0.8^\circ\text{C}$$
+- **Operator Control**: Displayed on the dashboard with an "Accept & Impute" button, logging both raw corrupted telemetry and calibrated imputed data in Supabase.
+
+---
+
+## 11. Evaluation Metrics & Benchmark Targets
+
+| Metric | Target | Rationale |
 |---|---|---|
-| Conv1D × 2 | 32 → 16 filters, kernel 3 | Sliding over 12 timesteps captures 2-hour context |
-| Latent dim = 8 | Bottleneck | Forces compression; too large → memorizes anomalies, too small → underfits normal variance |
-| Loss | MSE on normal data | Standard AE objective |
-| Optimizer | Adam, lr = 1e-3 | Standard |
-| Epochs | 50 with early stopping (patience 5) | Prevent overfit on normal-only data |
-| Validation split | 10% of normal set | Early stopping criterion |
-
-### 5.3 Training Loop (Pseudocode)
-
-```python
-model = CNN1DAutoencoder(window=12, n_features=9, latent_dim=8)
-model.compile(optimizer="adam", loss="mse")
-
-history = model.fit(
-    X_normal_train, X_normal_train,       # AE reconstructs its own input
-    validation_split=0.1,
-    epochs=50,
-    batch_size=64,
-    callbacks=[EarlyStopping(patience=5, restore_best_weights=True)]
-)
-```
-
-### 5.4 Inference & Scoring
-
-```python
-recon = model.predict(window[None, ...])         # (1, 12, 9)
-error = np.mean((window - recon[0]) ** 2)        # scalar MSE
-
-if error > THRESHOLD:
-    trigger_shap(window)
-else:
-    log_normal(window, error)
-```
-
-### 5.5 Threshold Selection
-
-Do **not** hard-code the threshold. Set it from the **normal-set error distribution**:
-
-```python
-normal_errors = [recon_error(w) for w in normal_val_windows]
-THRESHOLD = np.quantile(normal_errors, 0.995)   # 99.5th percentile
-```
-
-This guarantees a ~0.5% false-positive rate on clean data by construction and gives operators a principled knob to tune later.
+| **Edge Quantized Model Size** | $< 120\,\text{KB}$ | Fits comfortably in ESP32 Flash partition |
+| **Edge Inference Latency** | $< 20\,\text{ms}$ | Maintains 1 Hz real-time edge processing without task starvation |
+| **Model A Recall (Severe Weather)** | $\ge 96.0\%$ | Eliminates false alarms on true storms |
+| **Model B Precision (Injected Faults)** | $\ge 94.0\%$ | Prevents unnecessary technician dispatches |
+| **Confluence F1-Score** | $\ge 0.92$ | Holistic accuracy across complex scenarios |
+| **False Alarm Rate Reduction** | $\ge 85.0\%$ | Dramatic improvement over static threshold baselines |
+| **Imputation Mean Absolute Error (MAE)** | $T \le 0.6^\circ\text{C}$, $RH \le 4.5\%$, $P \le 0.8\,\text{hPa}$ | Sufficient fidelity for numerical weather ingestion |
 
 ---
 
-## 6. Explainability & Active Learning Loop
-
-### 6.1 SHAP-Based Diagnostics
-
-When `error > THRESHOLD`, we ask *which feature and which timestep* drove the reconstruction failure.
-
-```python
-explainer = shap.GradientExplainer(model, background=normal_sample_50)
-shap_values = explainer.shap_values(window[None, ...])   # (1, 12, 9)
-```
-
-- **Background sample size = 50** representative normal windows → keeps SHAP under 50 ms.
-- Aggregate `|shap|` per feature across the 12 timesteps to get a ranked contribution vector.
-
-```python
-contrib = np.abs(shap_values[0]).sum(axis=0)   # per-feature importance
-top_feature = FEATURES[np.argmax(contrib)]
-```
-
-### 6.2 Plain-English Mapping
-
-| Top SHAP Feature | Frontend Message |
-|---|---|
-| `RH` | "Humidity sensor indicated as damaged — inconsistent with temperature history." |
-| `dP/dt` | "Abnormal pressure drop rate detected — possible sensor drift or front." |
-| `Td` | "Dew point physically inconsistent with temperature reading." |
-| `ΔT_spatial` | "Station deviates from neighboring station by more than expected." |
-| `drop_flag` | "High packet loss in window — alert may be a connectivity artifact." |
-
-### 6.3 The Feedback Loop (Operator-in-the-Loop)
-
-```mermaid
-sequenceDiagram
-    participant U as Operator
-    participant D as Dashboard
-    participant B as Backend
-    participant Z as Latent Buffer
-    participant DB as DBSCAN Job
-
-    B->>D: Alert (error, top SHAP features)
-    U->>D: Clicks "False Alarm"
-    D->>B: POST /feedback {alert_id, label=FP}
-    B->>Z: Append latent z of that window
-    Z->>DB: Batch trigger (every 100 FPs)
-    DB->>DB: Cluster z-space (eps=0.3, min_samples=5)
-    DB-->>D: "Cluster #7 (sunrise gradient) — recommend threshold +0.002"
-    D-->>U: Threshold update proposal
-```
-
-### 6.4 Why DBSCAN on the Latent Space?
-
-- False positives often **cluster** in `z`-space (e.g., every sunrise creates a similar multivariate pattern the autoencoder never saw).
-- **DBSCAN** is chosen over k-means because the number of clusters is unknown and we want to identify *density* — outliers (one-off FPs) are naturally excluded as noise (`label = -1`).
-- When a dense cluster of FPs is found, the system **recommends** — never auto-applies — a threshold or feature-mask update. The operator retains authority.
-
-### 6.5 Feedback Loop Parameters
-
-| Parameter | Value | Notes |
-|---|---|---|
-| Latent buffer size | 1000 | Rolling |
-| DBSCAN `eps` | 0.3 | Tuned on baseline z-spread |
-| DBSCAN `min_samples` | 5 | Minimum cluster to be meaningful |
-| Recommendation trigger | Cluster size ≥ 5 | Avoids knee-jerk changes |
-
----
-
-## 7. Deployment Topology
-
-```mermaid
-graph TB
-    subgraph EDGE["Edge Node (per station)"]
-        SIM[MQTT Simulator] --> PF[Pre-filter + Forward Fill]
-        PF --> BUF[12-Step Ring Buffer]
-        BUF --> RULE[Stage 1 Rules]
-        RULE --> CNN[1D-CNN AE<br/>TensorFlow Lite]
-    end
-
-    subgraph CLOUD["Cloud / Backend"]
-        ING[Ingest Service]
-        SHAP[SHAP Service]
-        DB[Dashboard API]
-        BLOB[(scaler.pkl + model.h5)]
-    end
-
-    CNN -->|anomaly window| ING
-    ING --> SHAP
-    SHAP --> DB
-    BLOB -.-> CNN
-    BLOB -.-> SHAP
-```
-
-- **Edge:** Rules + CNN run locally → sub-50 ms latency, works offline.
-- **Cloud:** SHAP + dashboard + DBSCAN feedback run server-side (heavier compute, non-blocking).
-- **Artifacts:** Model and scaler stored in a cloud bucket with versioned paths (`v1.0/scaler.pkl`).
-
----
-
-## 8. Evaluation & Metrics
-
-| Metric | Target | Why |
-|---|---|---|
-| **Precision @ top-K alerts** | ≥ 0.85 | Operators lose trust if alerts are noisy |
-| **Recall on injected faults** | ≥ 0.95 | Missing a stuck sensor is costly |
-| **False-positive rate (normal set)** | ≤ 0.5% | By construction (99.5th percentile threshold) |
-| **Mean time-to-detect** | ≤ 30 min (3 windows) | SLA for sensor drift |
-| **CNN latency (edge)** | ≤ 40 ms | Real-time |
-| **SHAP latency (cloud)** | ≤ 50 ms | Interactive dashboard |
-
-### Fault Injection Test Set
-
-Create a synthetic test set with known anomalies:
-
-- **Drift:** gradually bias `T` by +0.1 °C per step.
-- **Stuck:** freeze `RH` at last valid value for 6 hours.
-- **Spike:** single-step `T += 6 °C`.
-- **Decoupling:** `RH += 20%` while `T` unchanged.
-- **Dropout:** 40% missing packets for 1 hour.
-
-Report a confusion matrix per fault type.
-
----
-
-## 9. Implementation Roadmap
-
-```mermaid
-gantt
-    title Anomaly Detection Rollout
-    dateFormat  YYYY-MM-DD
-    section Phase 1 – Foundations
-    MQTT ingest + forward-fill         :a1, 2026-01-05, 5d
-    Feature pipeline + scaler.pkl      :a2, after a1, 5d
-    Stage 1 IMD rules                  :a3, after a1, 3d
-    section Phase 2 – Baselines
-    Decision Tree + K-Means            :b1, after a3, 4d
-    Baseline eval + benchmark          :b2, after b1, 3d
-    section Phase 3 – CNN
-    Autoencoder training               :c1, after b2, 7d
-    Threshold calibration              :c2, after c1, 2d
-    section Phase 4 – Explainability
-    SHAP integration                   :d1, after c2, 4d
-    Dashboard + plain-English alerts   :d2, after d1, 5d
-    section Phase 5 – Feedback
-    DBSCAN latent loop                 :e1, after d2, 5d
-    Operator threshold review UI       :e2, after e1, 4d
-```
-
-### Phase Gates
-
-| Phase | Exit Criteria |
-|---|---|
-| 1 | ≥ 1 day of clean data flowing end-to-end |
-| 2 | Baseline F1 reported; CNN benchmark defined |
-| 3 | CNN beats baseline on injected fault recall by ≥ 5% |
-| 4 | SHAP < 50 ms; alerts readable by non-ML operator |
-| 5 | DBSCAN produces ≥ 1 actionable recommendation on real FP data |
-
----
-
-## 10. Appendix: Thresholds & Config Reference
+## 12. Configuration Reference (`config/ml_pipeline.yaml`)
 
 ```yaml
-# config/anomaly.yaml
-stage1:
-  rh_min: 0
-  rh_max: 100
-  dt_step: 0.3          # °C per 10 min
-  drh_step: 3.0         # % per 10 min
-  dp_step: 0.3          # hPa per 10 min
-  dt_spike: 5.0         # °C per 10 min
-  stale_consecutive: 3  # packets
+edge_layer:
+  target: "ESP32-S3"
+  model_type: "tflite_micro_autoencoder_int8"
+  window_size: 12
+  quantized_threshold: 0.038
+  limits:
+    temp_min: -5.0
+    temp_max: 55.0
+    rh_min: 0.0
+    rh_max: 100.0
+    pressure_min: 900.0
+    pressure_max: 1060.0
+    max_temp_rate_10min: 5.0
+    max_rh_rate_10min: 20.0
+    max_pressure_rate_10min: 3.5
 
-window:
-  length: 12
-  cadence_minutes: 10
-
-features:
-  - T
-  - RH
-  - P
-  - Td
-  - dT_dt
-  - dP_dt
-  - dRH_dt
-  - dT_spatial
-  - drop_flag
-
-model:
-  latent_dim: 8
-  conv_filters: [32, 16]
-  kernel_size: 3
-  epochs: 50
-  batch_size: 64
-  early_stop_patience: 5
-
-threshold:
-  strategy: quantile
-  quantile: 0.995
-  fallback_value: 0.0042
-
-shap:
-  background_samples: 50
-  explainer: GradientExplainer
-
-dbscan:
-  eps: 0.3
-  min_samples: 5
-  buffer_size: 1000
-
-artifacts:
-  scaler_uri: "gs://weather-anomaly/artifacts/scaler.pkl"
-  model_uri:  "gs://weather-anomaly/artifacts/cnn_ae_v1.h5"
+cloud_analytics:
+  multi_scale:
+    short_term_steps: 12
+    long_term_days: 14
+  model_a:
+    type: "lightgbm_weather_classifier"
+    high_confidence_threshold: 0.70
+    low_confidence_threshold: 0.30
+  model_b:
+    type: "lightgbm_defect_classifier"
+    high_confidence_threshold: 0.70
+    low_confidence_threshold: 0.30
+    synthetic_faults:
+      - frozen_value
+      - impulse_spike
+      - noise_burst
+      - capacitive_drift
+      - packet_dropout
+  confluence:
+    agreement_bonus: 1.0
+    disagreement_penalty_factor: 0.25
+  xai:
+    explainer: "tree_shap"
+    background_samples: 50
+  predictive_maintenance:
+    ewma_lambda: 0.2
+    warning_sigma: 2.0
+    critical_sigma: 3.5
+  imputation:
+    model: "multivariate_lstm_regressor"
+    confidence_interval: 0.95
 ```
-
----
-
-## Closing Notes
-
-This design deliberately **separates concerns**:
-
-- **Rules** handle the physically impossible — cheap, deterministic, auditable.
-- **Baselines** provide a safety net and a benchmark.
-- **The CNN** handles multivariate, temporal anomalies that no rule can express.
-- **SHAP** converts the CNN's black box into operator-readable diagnostics.
-- **DBSCAN** closes the loop, letting the system *learn from its own mistakes* without ever silently changing its own thresholds.
-
-The result is a pipeline that is fast enough for the edge, explainable enough for operators, and honest enough to admit when it's wrong.

@@ -1,18 +1,18 @@
 # 🚀 SkyGuard AI — 5-Day Master Execution Checklist (TASKS.md)
 
-> **Sprint Objective:** Build, test, and record a **two-laptop edge-to-cloud demonstration** showing a **Machine Learning pipeline operating LIVE in real time** at 1 Hz.  
+> **Sprint Objective:** Build, test, and record a **two-laptop edge-to-cloud demonstration** showing a **Split-Edge/Cloud Machine Learning pipeline operating LIVE in real time** at 1 Hz.  
 >
 > **The Real-Time ML Experience:**
-> 1. **Laptop 1 (Hardware AWS Station):** Emulates on-site weather station `AGRA-01`, streaming 1 Hz sensor packets over MQTT to the cloud.
-> 2. **Cloud (Azure VM + Supabase):** Every second, incoming telemetry is evaluated by an actual **1D-CNN Autoencoder** running on the CPU. It calculates real-time Reconstruction Error (MSE), checks against the Anomaly Threshold ($\tau = 0.042$), computes live SHAP feature attributions, and broadcasts the live ML telemetry stream.
-> 3. **Laptop 2 (IMD Control Room):** Displays the **Live ML Pipeline Monitor** in real time — an active MSE waveform moving tick-by-tick, dynamic SHAP attribution bars, and an interactive 3D Digital Twin that auto-zooms into the culprit sensor the instant the threshold is breached.
-> 4. **Google Colab:** Dedicated environment for training the 1D-CNN autoencoder, exporting the model weights (`autoencoder.onnx`), and producing evaluation curves for the video presentation.
+> 1. **Laptop 1 (Hardware AWS Station / Edge Node):** Emulates on-site weather station `AGRA-01` running an ESP32 architecture profile: Layer 1.1 IMD Plausibility filter and Layer 1.2 Quantized PyOD/TFLite Micro outlier detection, buffering normal data locally and transmitting incident bursts with a pre-anomaly context window over MQTT to the cloud.
+> 2. **Cloud (Azure VM + Supabase):** Real-time evaluations conducted by the **2.0 Cloud Analytics Layer**: Multi-Scale Multivariate Analyzer feeds **Model A (Weather Classifier)** and **Model B (Sensor Defect Classifier, trained on synthetic fault injections)** into the **Classification Confluence Decision Matrix**, calculating exact confidence scores, live SHAP attributions, Predictive Maintenance horizons, and Imputed parameter values.
+> 3. **Laptop 2 (IMD Control Room):** Displays the **Live ML Pipeline Monitor** in real time — active waveform metrics, dynamic SHAP attribution bars, Sensor Health recalibration forecast, suggested imputed parameters, and an interactive 3D Digital Twin that auto-zooms into the culprit sensor the instant a defect is confirmed.
+> 4. **Google Colab:** Dedicated environment for training Model A on weather phenomena, injecting synthetic defects to train Model B, exporting weights, and producing benchmark curves for evaluation.
 >
 > **Team Rules:** 6 team members. **Zero human syntax writing.** Humans copy-paste AI prompts, set up accounts, review outputs, click cloud buttons, and run test commands.
 
 ---
 
-## 📌 Live Real-Time ML Architecture
+## 📌 Live Real-Time Split-Edge/Cloud Architecture
 
 ```
   ┌─────────────────────────┐               ┌─────────────────────────────────────────┐
@@ -36,12 +36,12 @@
   │   ┌─────────────────────┐            ┌────────────────────────────────────────┐   │
   │   │  Mosquitto Broker   │───────────▶│         FastAPI Engine Core            │   │
   │   │     (Port 1883)     │            │                                        │   │
-  │   └─────────────────────┘            │  1. Stage 1: IMD Deterministic Rules   │   │
-  │                                      │  2. Stage 2: 1D-CNN ONNX Autoencoder   │   │
-  │                                      │     - 12-step rolling window           │   │
-  │                                      │     - Real-Time MSE Calculation        │   │
-  │                                      │     - Live SHAP Feature Importance     │   │
-  │                                      │  3. SSE Broadcaster (Push 1 Hz ML Feed)│   │
+  │   └─────────────────────┘            │  1. Multi-Scale Analyzer (Short/Long)  │   │
+  │                                      │  2. Dual Models (A: Weather, B: Defect)│   │
+  │                                      │  3. Confluence & Confidence Scoring    │   │
+  │                                      │  4. Live SHAP Attribution (XAI Hub)    │   │
+  │                                      │  5. Predictive Maintenance & Imputation│   │
+  │                                      │  6. SSE Broadcaster (1 Hz ML Feed)     │   │
   │                                      └───────────────────┬────────────────────┘   │
   └──────────────────────────────────────────────────────────┼────────────────────────┘
                                                              │

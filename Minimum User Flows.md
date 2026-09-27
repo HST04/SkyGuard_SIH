@@ -1,57 +1,117 @@
-# SkyGuard AI MVP: Minimum User Flows
+# SkyGuard AI MVP: Minimum User Flows & Operational Journeys
 
-## 1. Primary Flow: Real-Time Anomaly Detection & SHAP Explainability
+This document outlines the core user and system flows for the **SkyGuard AI Split-Edge/Cloud Anomaly Detection Architecture**.
 
-This is the core, automated loop that runs continuously during your demonstration, moving data from the virtual edge to the 3D dashboard.
+---
 
-- **Data Generation:** The `/edge-simulator` background worker publishes a JSON telemetry payload via MQTT to your Azure-hosted Eclipse Mosquitto broker.
-- **Ingestion & Hard Rules:** The FastAPI backend consumes the message and runs it against the India Meteorological Department (IMD) hard rules (e.g., RH ≤ 100%).
-- **Deep Inference:** Valid data is appended to a 12-timestep rolling buffer and fed into the 1D-CNN Autoencoder.
-- **Evaluation:** The system calculates the reconstruction error. If it exceeds the threshold, the backend generates SHAP values to isolate the exact culprit sensor.
-- **Storage & Push:** The raw telemetry and anomaly metadata are written to Supabase (PostgreSQL), immediately triggering a Server-Sent Events (SSE) push to the frontend.
-- **UI Visualization:** The Next.js dashboard updates: the Three.js Digital Twin flashes red, the camera smoothly auto-focuses on the faulty sensor node, and the SHAP bar chart renders on the side panel.
+## 1. Primary Flow: Edge Filtering, Confluence Reasoning, & XAI Diagnostics
 
-### Sequence Diagram
+This continuous loop moves telemetry from sensory acquisition on the edge node to cloud triage and operator visualization.
+
+1. **Sensory Acquisition (1.0 Edge Device)**:
+   The physical ESP32 (or Python edge simulator) polls temperature, pressure, and relative humidity at 1 Hz.
+2. **Layer 1.1 IMD Plausibility Check**:
+   The edge firmware executes zero-latency boundary rules (e.g., rejecting $T < 0^\circ\text{C}$ in Agra in May). If violated, an immediate rule flag is triggered.
+3. **Layer 1.2 Quantized PyOD Outlier Detection**:
+   If boundaries pass, the 12-timestep sliding window is evaluated by the INT8 Quantized Autoencoder (TFLite Micro). If reconstruction error is normal, data is saved to local ring storage.
+4. **Layer 1.3 Context Burst Transmission**:
+   If an anomaly is detected, the edge transmits an MQTT **Incident Packet** containing the trigger reading along with a 2–4 hour pre-anomaly contextual buffer.
+5. **Layer 2.1 Multi-Scale Analysis**:
+   The cloud backend parses short-term multivariate consistency ($dT/dt, dP/dt, dRH/dt$) and long-term seasonal baselines.
+6. **Layer 2.2 Dual-Model Inference**:
+   - **Model A (Weather Classifier)** evaluates probability of natural storm phenomena: $P(\text{Weather})$.
+   - **Model B (Sensor Defect Classifier)** (trained on synthetically injected faults) evaluates probability of hardware failure: $P(\text{Defect})$.
+7. **Layer 2.3 Classification Confluence & Confidence Scoring**:
+   The Confluence Decision Matrix fuses both predictions into a definitive classification (e.g., "Sensor Defect") and calculates an exact confidence score (e.g., 92.4%).
+8. **Layer 2.4 Explainable AI (XAI) Hub**:
+   The system computes per-sensor SHAP importance percentages and generates a plain-English text justification.
+9. **Layer 3.0 Dashboard Visualization**:
+   The Next.js 3D Digital Twin pulses red, the camera automatically glides and zooms into the culprit sensor shield, and the Explainable Report Viewer renders the diagnostic breakdown.
+
+### Primary Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant Simulator as Virtual Edge UI
-    participant MQTT as Mosquitto (Azure)
-    participant API as FastAPI Backend
-    participant DB as Supabase
-    participant UI as Next.js Dashboard
+    autonumber
+    participant Sensor as Physical Sensors
+    participant Edge as 1.0 ESP32 Edge Device
+    participant Broker as Mosquitto MQTT Broker
+    participant Cloud as 2.0 Cloud Analytics (FastAPI)
+    participant Models as Dual Models (A: Weather, B: Defect)
+    participant Confluence as 2.3 Confluence Scorer
+    participant XAI as 2.4 Explainable AI Hub
+    participant DB as Supabase PostgreSQL
+    participant UI as 3.0 Next.js Dashboard
 
-    Simulator->>MQTT: Publish JSON Payload
-    MQTT->>API: Subscribe & Receive
-    API->>API: IMD Rule Check + 1D-CNN Inference
-    opt Reconstruction Error > Threshold
-        API->>API: Compute SHAP values
+    Sensor->>Edge: Analog/Digital Telemetry (1 Hz)
+    Edge->>Edge: 1.1 IMD Plausibility Check
+    Edge->>Edge: 1.2 Quantized PyOD / TFLite Micro Check
+    alt Normal Telemetry
+        Edge->>Edge: Write to Local Ring Store
+        Note over Edge,Broker: Periodic heartbeat summary
+    else Anomaly Flagged
+        Edge->>Broker: Publish Incident Packet (Trigger + Pre-Anomaly Buffer)
+        Broker->>Cloud: Route to /telemetry/incident
+        Cloud->>Models: Evaluate Window through Model A & Model B
+        Models->>Confluence: Return P(Weather) and P(Defect)
+        Confluence->>Confluence: Compute Confluence Status & Confidence Score
+        Confluence->>XAI: Generate SHAP Values & Text Justification
+        Cloud->>DB: Persist Incident Record & SHAP Metadata
+        Cloud->>UI: SSE Real-Time Event Broadcast
+        UI->>UI: 3D Twin Red Pulse, Auto-Camera Zoom, Render Report Card
     end
-    API->>DB: Insert Telemetry & Anomaly
-    API->>UI: SSE: Real-Time State Update
-    UI->>UI: 3D Twin Auto-Focus & Render SHAP
 ```
 
-## 2. Secondary Flow: The Active Learning "Feedback Loop"
+---
 
-This flow demonstrates the system's ability to learn from its operators and mitigate alert fatigue over time.
+## 2. Secondary Flow: Predictive Maintenance & Sensor Health (3.4)
 
-- **Alert Review:** The dashboard operator clicks on an active anomaly card in the UI.
-- **Human Override:** Recognizing a natural, localized weather event, the operator clicks the "Mark as False Alarm" button.
-- **Data Logging:** The Next.js app sends a POST request to `/api/v1/model/feedback`, logging the event in the `human_feedback_events` table.
-- **Latent Space Clustering:** The backend extracts the 1D-CNN's latent bottleneck vector for that specific sample and applies DBSCAN clustering.
-- **System Adaptation:** If the vector falls into a dense cluster of previous false alarms, the UI displays a notification: *"System Learning: Recurrent False Positive pattern identified. Recommend threshold adjustment."*
+This flow shifts AWS operations from reactive emergency repairs to proactive maintenance planning, addressing **Objective 6**.
 
-## 3. Demo Flow: The 5-Minute "Auto-Scenario" Pitch Script
+1. **Daily Drift Accumulation**:
+   As clean telemetry is logged in Supabase, the Cloud Analytics Layer calculates daily residual errors against diurnal expectations.
+2. **EWMA Residual Tracking**:
+   The system updates an Exponentially Weighted Moving Average (EWMA) of drift for each individual sensor.
+3. **Threshold Warning**:
+   When cumulative drift exceeds the $2.0\sigma$ warning boundary, the sensor status changes to **"At Risk"**.
+4. **Maintenance Horizon Calculation**:
+   The system divides remaining calibration tolerance by the drift slope to forecast: *"Pressure Sensor Calibration due in < 2 Weeks (11 days remaining)"*.
+5. **Dashboard Notification**:
+   The operator is alerted in the Sensor Health & Predictions panel, allowing technicians to schedule field recalibration before data integrity is compromised.
 
-This flow ensures a flawless, hands-free live presentation for the judges.
+---
 
-- **Initialization:** The presenter clicks "Run Pitch Script" on the `/edge-simulator` UI, triggering a pre-programmed timeline.
-- **T+0:00 (Baseline):** The simulator streams normal diurnal weather cycles. The 3D Twin is green.
-- **T+1:30 (True Negative Test):** A severe thunderstorm is simulated (sharp pressure drop, humidity spike). The CNN processes the multivariate shift and correctly leaves the station green.
-- **T+3:00 (Subtle Degradation Test):** The simulator injects a slow +15% humidity capacitive drift.
-- **T+3:45 (Detection):** The CUSUM drift logic trips. The 3D Twin turns red, zooms into the humidity shield, and displays a maintenance alert.
+## 3. Tertiary Flow: Imputation & Data Correction (3.5)
 
-## Analytics Question
+This flow ensures continuous data feeds for numerical weather prediction models when a sensor failure is confirmed.
 
-What specific anomaly metric (e.g., F1-Score or False Alarm Rate reduction) would you like to highlight first on the dashboard's analytics tab?
+1. **Defect Confirmation**:
+   The Confluence Matrix classifies an incident as **Sensor Defect** with high confidence ($\ge 85\%$).
+2. **Culprit Isolation**:
+   The XAI Hub isolates the faulty parameter (e.g., Temperature sensor $T$).
+3. **Multivariate Imputation**:
+   The cloud invokes the **3.5 Imputation & Correction Module** (Multivariate LSTM / Regression model), using valid correlated parameters ($P$, $RH$, solar angle) to estimate the true value.
+4. **Operator Verification**:
+   The dashboard displays:
+   > Reported Faulty $T: 38.4^\circ\text{C}$ ➔ Suggested Imputed $T: 27.2^\circ\text{C} \pm 0.6^\circ\text{C}$
+5. **Application**:
+   The operator clicks "Accept & Impute", logging the corrected value into the imputed telemetry table without corrupting the raw audit log.
+
+---
+
+## 4. Live Demonstration Flow: The 5-Minute Pitch Script
+
+Designed for live hackathon presentations and evaluator walkthroughs:
+
+- **T+0:00 (Baseline Diurnal Normal)**:
+  Simulator streams nominal diurnal temperature and humidity. 3D Twin is green; Sensor Health is "Healthy".
+- **T+1:30 (True-Negative Thunderstorm Test)**:
+  Simulator injects a sharp barometric pressure drop accompanied by realistic cooling and humidity surge.
+  *Outcome*: Model A reports $P(\text{Weather}) = 0.96$; Model B reports $P(\text{Defect}) = 0.02$. Confluence registers **Natural Weather Event**. Zero false alarm; station remains green!
+- **T+3:00 (Synthetic Defect: Frozen Humidity)**:
+  Simulator freezes Relative Humidity at $84.2\%$ while temperature continues natural fluctuation.
+  *Outcome*: Layer 1.2 flags the correlation anomaly. Edge transmits incident context burst.
+- **T+3:45 (Triage & Camera Zoom)**:
+  Model B detects the flatline signature ($P(\text{Defect}) = 0.94$). Confluence triggers **Sensor Defect Alert (92.4% Confidence)**. 3D Digital Twin pulses red, camera auto-focuses on the humidity sensor shield, and the SHAP report viewer explains the decision.
+- **T+4:30 (Predictive Maintenance & Imputation)**:
+  Presenter highlights the Predictive Maintenance tab showing calibration forecasts, and demonstrates real-time parameter imputation ($84.2\% \to 42.6\%\,\text{RH}$).

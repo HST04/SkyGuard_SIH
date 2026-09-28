@@ -8,12 +8,13 @@ import { TelemetryPayload, AnomalyEvent } from '@/lib/types';
 const STREAM_URL = process.env.NEXT_PUBLIC_STREAM_URL || 'http://localhost:8000/api/v1/telemetry/stream';
 
 export function useSSE(stationId = 'AGRA-01') {
-  const { 
-    setLatestTelemetry, 
-    setTelemetryHistory, 
-    addAnomaly, 
+  const {
+    setLatestTelemetry,
+    setTelemetryHistory,
+    addAnomaly,
     setConnectionStatus,
-    setSimulatorState 
+    setSimulatorState,
+    markImputationAccepted,
   } = useTelemetryStore();
 
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -91,6 +92,12 @@ export function useSSE(stationId = 'AGRA-01') {
         }
       });
 
+      // Listen for imputation accepted broadcast
+      es.addEventListener('imputation_accepted', () => {
+        if (!isMounted) return;
+        markImputationAccepted(true);
+      });
+
       // Listen for heartbeats
       es.addEventListener('heartbeat', () => {
         if (!isMounted) return;
@@ -132,5 +139,13 @@ export function useSSE(stationId = 'AGRA-01') {
         eventSourceRef.current.close();
       }
     };
-  }, [stationId, setLatestTelemetry, setTelemetryHistory, addAnomaly, setConnectionStatus, setSimulatorState]);
+  }, [
+    stationId,
+    setLatestTelemetry,
+    setTelemetryHistory,
+    addAnomaly,
+    setConnectionStatus,
+    setSimulatorState,
+    markImputationAccepted,
+  ]);
 }

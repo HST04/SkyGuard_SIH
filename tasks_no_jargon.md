@@ -7,42 +7,47 @@
 
 ---
 
-## 🗺️ How the Whole System Works (The 30-Second Picture)
-
-Imagine India's weather stations as remote lighthouses in deserts and mountains:
+## 🗺️ How the System Works
 
 ```
- [LAPTOP 1: The Remote Weather Station]
+ [LAPTOP 1: Weather Station]
        │  (Reads temperature & humidity every second)
-       │  (Filters obvious junk and saves the last 2 hours in a black box)
+       │  (Filters basic errors and saves the last 2 hours in a circular buffer)
        ▼
- [AZURE CLOUD SERVER: The Central Brain]
-       ├── Saves every reading to a Cloud Notebook (Supabase Database)
-       ├── "Model A" checks: Is there a natural thunderstorm?
-       ├── "Model B" checks: Did a bird nest on the sensor or did it break?
-       ├── "The Judge" (Confluence Engine) makes the final decision
-       ├── "The Doctor" (Predictive Maintenance) warns if a sensor is getting sick
-       └── "The Repairman" (Imputation) fills in missing numbers if a sensor dies
+ [AZURE CLOUD SERVER: Backend Engine]
+       ├── Saves readings to Database (Supabase PostgreSQL + local SQLite fallback)
+       ├── Model A: Identifies natural weather events (e.g. thunderstorms)
+       ├── Model B: Identifies physical sensor defects (e.g. drift, flatlines)
+       ├── Confluence Decision Matrix: Evaluates both models to classify the event
+       ├── Predictive Maintenance: Tracks sensor drift over days
+       └── Imputation Module: Reconstructs faulty sensor values from healthy sensors
        │
        ▼
- [LAPTOP 2: The Control Room Screen]
-       └── Shows a 3D animated weather station!
-           When a sensor breaks, the screen flashes Red, the camera zooms right into it,
-           and a plain-English report pops up explaining exactly what happened!
+ [LAPTOP 2: Control Room Dashboard]
+       └── Shows 4 tabs (Live ML, SHAP Explainability, Maintenance, Imputation)
+           and an interactive 3D weather station that auto-focuses on faulty sensors.
 ```
 
 ---
 
-## 📅 The 48-Hour Plan (What We Do and When)
+## 👥 Team Assignments & Coordination
 
-| When | What We Are Building | Who Works On It |
-|---|---|---|
-| **Hours 0–6** | **Stage 1 & 2:** Cloud Notebook (Database) + Cloud Server (Azure) | Backend & Cloud Lead |
-| **Hours 6–12** | **Stage 3 & 4:** Fake Weather Data + Training the AI in Google Colab | Data Science & ML Lead |
-| **Hours 12–24** | **Stage 5:** The Cloud Brain (The Judge, The Doctor, The Repairman) | Backend Lead |
-| **Hours 25–34** | **Stage 6 & 7:** Laptop 1 Transmitter + Laptop 2 3D Control Screen | Edge & Frontend Leads |
-| **Hours 34–40** | **Stage 8:** Rehearsal (Testing everything together on two laptops) | All Team Members |
-| **Hours 40–48** | **Stage 9:** Video Recording (5-Minute Presentation Video) | All Team Members |
+| Member | Assigned Component | Deliverable Handed Off | Branch |
+|---|---|---|---|
+| **Hanswarup** | Pull requests, Docker setup, and the Multi-Scale Analyzer (calculates rates of change and thermodynamic coupling). | Running cloud server (ports 1883 & 8000) and analyzer service | `feat/hanswarup` |
+| **Yukti** | Training in Google Colab (1D-CNN Autoencoder, Model A Weather Classifier, Model B Defect Classifier). | Model weight files in `backend/ml_artifacts/` | `feat/yukti` |
+| **Araz** | Dataset checking and the Laptop 1 emulator script (5 chaos keys, 2-hour circular buffer, context burst). | Datasets in `data/` and 1 Hz MQTT live stream | `feat/araz` |
+| **Mudit** | Database setup (Supabase + SQLite fallback) and the Confluence Decision Matrix service. | Database tables and confluence decision service | `feat/mudit` |
+| **Harsh** | Predictive maintenance drift tracker, imputation service, and telemetry ingestion pipeline. | 1 Hz SSE stream broadcasting all metrics | `feat/harsh` |
+| **Shreyansh** | Next.js 4-tab control room dashboard and 3D digital twin camera auto-zoom. | Web dashboard on `localhost:3000` | `feat/shreyansh` |
+
+### 🔄 Technical Handoffs:
+1. **Araz ➔ Yukti:** Araz provides `train_baseline_normal.csv` and `test_fault_injections.csv`. Yukti uploads them to Colab to train the models.
+2. **Yukti ➔ Hanswarup, Mudit, Harsh:** Yukti exports model files to `backend/ml_artifacts/`. Hanswarup adds dependencies to Docker; Mudit and Harsh load them in backend services.
+3. **Hanswarup ➔ Mudit, Harsh:** Hanswarup's Multi-Scale Analyzer calculates rates of change ($dT/dt, dP/dt$) and passes them to Mudit's confluence service and Harsh's ingestion pipeline.
+4. **Harsh ➔ Shreyansh:** Harsh bundles telemetry, confluence decision, maintenance drift, and imputed values into the 1 Hz SSE stream; Shreyansh binds these values to the 4 dashboard tabs.
+5. **Hanswarup ➔ Araz:** Hanswarup runs Mosquitto on port 1883; Araz points the Laptop 1 transmitter to that port.
+6. **All ➔ Hanswarup:** Members push to their branch and open pull requests; Hanswarup reviews diffs, runs tests, and merges into `main`.
 
 ---
 

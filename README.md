@@ -9,6 +9,11 @@
 
 ---
 
+> 🎥 **Video Submission Guide (3-Minute Hackathon Demo)**:  
+> Check out the complete screenplay, staging layout, voiceover script, and evaluator defense cheat sheet in [PROTOTYPE_VIDEO_SUBMISSION_GUIDE.md](file:///c:/Users/lenovo/Desktop/SkyGuard%20AI/SkyGuard_SIH/PROTOTYPE_VIDEO_SUBMISSION_GUIDE.md).
+
+---
+
 ## 🌟 Key Architecture & Capabilities
 
 ```mermaid

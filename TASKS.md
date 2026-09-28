@@ -190,7 +190,7 @@ To avoid integration issues, members hand off components according to these cont
 2. The system requires a deterministic decision mechanism rather than arbitrary thresholds. Mudit implements the Confluence Decision Matrix (PRD Section 5.5) which reconciles Model A ($P(\text{Weather})$) and Model B ($P(\text{Defect})$) into a clear classification with a mathematical confidence score.
 
 #### Tasks:
-- [ ] **Task 4.1: Database Layer (Supabase PostgreSQL + SQLite Fallback)**
+- [x] **Task 4.1: Database Layer (Supabase PostgreSQL + SQLite Fallback)**
   - Create `backend/data/db.py`:
     - Connects using `DATABASE_URL` from `.env`, falls back to `sqlite+aiosqlite:///./skyguard.db`.
     - Tables: `telemetry_records`, `anomaly_incidents`, `maintenance_predictions`, `operator_feedback`.
@@ -201,7 +201,7 @@ To avoid integration issues, members hand off components according to these cont
     python -c "import asyncio; from data.db import init_db; asyncio.run(init_db()); print('DB verified')"
     ```
 
-- [ ] **Task 4.2: Classification Confluence Decision Matrix Engine (Layer 2.3)**
+- [x] **Task 4.2: Classification Confluence Decision Matrix Engine (Layer 2.3)**
   - Create `backend/services/confluence_engine.py`:
     - Loads `model_a_weather.pkl` and `model_b_defect.pkl` from `backend/ml_artifacts/`.
     - Decision Matrix Rules:

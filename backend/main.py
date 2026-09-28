@@ -6,6 +6,7 @@ from config import settings
 from routers.telemetry import router as telemetry_router
 from routers.anomalies import router as anomalies_router
 from routers.simulator import router as simulator_router
+from routers.sensor_health import router as sensor_health_router
 from simulator.edge_simulator import simulator
 from services.mqtt_subscriber import mqtt_subscriber
 
@@ -45,6 +46,7 @@ app.add_middleware(
 app.include_router(telemetry_router, prefix=settings.API_V1_STR)
 app.include_router(anomalies_router, prefix=settings.API_V1_STR)
 app.include_router(simulator_router, prefix=settings.API_V1_STR)
+app.include_router(sensor_health_router, prefix=settings.API_V1_STR)
 
 @app.get("/health")
 async def health_check():

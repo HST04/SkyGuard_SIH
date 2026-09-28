@@ -6,6 +6,7 @@ from config import settings
 from services.anomaly_detector import anomaly_detector
 from services.rule_engine import IMDPhysicsRuleEngine
 from services.sse_manager import sse_manager
+from services.sensor_health import sensor_health
 from data.store import store
 
 
@@ -52,12 +53,23 @@ class TelemetryIngestionService:
             payload.inference_time_ms = latency_ms
             payload.live_attributions = live_attributions
 
+            # Predictive maintenance + imputation (Harsh). When the confluence
+            # engine lands, pass its weather decision as weather_event=.
+            health = sensor_health.process(payload, detected_anomaly)
+            payload.maintenance = health["maintenance"]
+            payload.imputation = health["imputation"]
+            payload.weather = health["weather"]
+
             store.add_telemetry(payload)
             await sse_manager.broadcast("telemetry", payload.model_dump())
 
             if detected_anomaly:
                 store.add_anomaly(detected_anomaly)
                 await sse_manager.broadcast("anomaly", detected_anomaly.model_dump())
+
+            if health["event"]:
+                store.add_anomaly(health["event"])
+                await sse_manager.broadcast("anomaly", health["event"].model_dump())
 
             return detected_anomaly
 

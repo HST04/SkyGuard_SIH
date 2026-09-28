@@ -23,6 +23,10 @@ class TelemetryPayload(BaseModel):
     reconstruction_error: float = 0.0142
     inference_time_ms: float = 2.4
     live_attributions: List[ShapAttribution] = []
+    # Filled by services/sensor_health.py (Harsh)
+    maintenance: Optional[Dict[str, Any]] = None
+    imputation: Optional[Dict[str, Any]] = None
+    weather: Optional[Dict[str, Any]] = None
 
 class AnomalyEvent(BaseModel):
     anomaly_id: str
@@ -42,6 +46,15 @@ class OperatorFeedback(BaseModel):
     anomaly_id: str
     label: Literal["false_alarm", "confirmed_fault"]
     note: Optional[str] = None
+
+class ImputationAcceptRequest(BaseModel):
+    station_id: str = "AGRA-01"
+    sensor: Literal["humidity", "temperature", "pressure"]
+    suggested: float
+    reported: Optional[float] = None
+    timestamp: Optional[str] = None
+    sequence: Optional[int] = None
+    method: Optional[str] = None
 
 class AnomalyUpdateRequest(BaseModel):
     status: Literal["open", "acknowledged", "resolved", "false_alarm"]

@@ -265,11 +265,11 @@ To avoid integration issues, members hand off components according to these cont
 3. The 3D Digital Twin must auto-focus on the faulty sensor shield when a defect is detected to provide visual clarity.
 
 #### Tasks:
-- [ ] **Task 6.1: Frontend Data Contracts & Store**
+- [x] **Task 6.1: Frontend Data Contracts & Store**
   - Update `frontend/src/lib/types.ts` to add interfaces for `ConfluenceResult`, `MaintenanceResult`, `ImputationResult`.
   - Update `frontend/src/stores/telemetryStore.ts` to store these fields from incoming SSE messages.
 
-- [ ] **Task 6.2: Tabbed Dashboard Panels & Refactor**
+- [x] **Task 6.2: Tabbed Dashboard Panels & Refactor**
   - Create `frontend/src/components/panels/ConfluenceAlertBanner.tsx`:
     - Badges: `Natural Weather Event` (Emerald Green), `Sensor Defect` (Rose Red pulse), `Compound Event` (Amber Orange).
     - Gauges for Model A $P(\text{Weather})$ and Model B $P(\text{Defect})$.

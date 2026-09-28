@@ -155,7 +155,7 @@ To avoid integration issues, members hand off components according to these cont
 3. The emulator implements a 2-hour circular ring buffer in memory and sends incident bursts on anomalies, demonstrating network bandwidth savings.
 
 #### Tasks:
-- [ ] **Task 3.1: Dataset Quality Check & Handoff**
+- [x] **Task 3.1: Dataset Quality Check & Handoff**
   - Run `python scripts/generate_dataset.py` to ensure `train_baseline_normal.csv` (15,000 rows) and `test_fault_injections.csv` (4,000 rows) are generated.
   - Run verification check:
     ```powershell
@@ -163,7 +163,7 @@ To avoid integration issues, members hand off components according to these cont
     ```
   - Confirm files are ready for Yukti.
 
-- [ ] **Task 3.2: Laptop 1 Edge Weather Station Emulator**
+- [x] **Task 3.2: Laptop 1 Edge Weather Station Emulator**
   - Update `backend/simulator/client.py`:
     - Connects to MQTT broker (`--host`, port 1883, topic `skyguard/telemetry`).
     - Evaluates Layer 1.1 IMD boundary checks locally.

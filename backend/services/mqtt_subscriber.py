@@ -59,8 +59,8 @@ class MQTTSubscriber:
         if reason_code.is_failure:
             logger.error("MQTT broker rejected connection: %s", reason_code)
             return
-        client.subscribe(settings.MQTT_TOPIC, qos=settings.MQTT_QOS)
-        logger.info("MQTT subscriber connected and subscribed to %s", settings.MQTT_TOPIC)
+        client.subscribe([(settings.MQTT_TOPIC, settings.MQTT_QOS), ("skyguard/incident", settings.MQTT_QOS)])
+        logger.info("MQTT subscriber connected and subscribed to %s and skyguard/incident", settings.MQTT_TOPIC)
 
     def _on_disconnect(
         self,
@@ -81,7 +81,11 @@ class MQTTSubscriber:
     ) -> None:
         try:
             raw_payload = json.loads(message.payload.decode("utf-8"))
-            payload = TelemetryPayload.model_validate(raw_payload)
+            if isinstance(raw_payload, dict) and "trigger_packet" in raw_payload:
+                target_data = raw_payload["trigger_packet"]
+            else:
+                target_data = raw_payload
+            payload = TelemetryPayload.model_validate(target_data)
         except (UnicodeDecodeError, json.JSONDecodeError, ValidationError) as exc:
             logger.error("Discarding invalid MQTT packet on %s: %s", message.topic, exc)
             return

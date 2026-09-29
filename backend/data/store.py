@@ -250,5 +250,13 @@ class InMemoryStore:
         while (not self._persist_queue.empty() or self._persist_queue.unfinished_tasks > 0) and time.time() < deadline:
             time.sleep(0.05)
 
+    def clear(self) -> None:
+        """Clears in-memory history and active anomalies (useful for testing)."""
+        with self._lock:
+            self._telemetry_history.clear()
+            self._anomalies.clear()
+            self._active_fault = "normal"
+            self._fault_expires_at = None
+
 
 store = InMemoryStore()

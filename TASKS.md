@@ -87,12 +87,12 @@ To avoid integration issues, members hand off components according to these cont
 3. Code from 5 teammates must be integrated cleanly without breaking the central pipeline.
 
 #### Tasks:
-- [ ] **Task 1.1: Pull Request & Merge Management**
+- [x] **Task 1.1: Pull Request & Merge Management**
   - Review incoming PRs from `feat/yukti`, `feat/araz`, `feat/mudit`, `feat/harsh`, `feat/shreyansh`.
   - Resolve file conflicts in shared configuration files (`requirements.txt`, `schemas.py`).
   - Run `python backend/tests/test_engine.py` before and after merging into `main`.
 
-- [ ] **Task 1.2: Docker & Cloud Deployment Configuration**
+- [x] **Task 1.2: Docker & Cloud Deployment Configuration**
   - Create `deploy/mosquitto.conf` (port 1883, anonymous access, persistence).
   - Create `deploy/Dockerfile.backend` (Python 3.11-slim, system build dependencies, pip install, uvicorn on port 8000).
   - Update root `docker-compose.yml` to define both `mosquitto` and `backend` services.
@@ -102,7 +102,7 @@ To avoid integration issues, members hand off components according to these cont
     curl http://localhost:8000/health
     ```
 
-- [ ] **Task 1.3: Multi-Scale Multivariate Analyzer (Layer 2.1)**
+- [x] **Task 1.3: Multi-Scale Multivariate Analyzer (Layer 2.1)**
   - Create `backend/services/multi_scale_analyzer.py`:
     - Computes numerical derivatives over sliding windows: $dT/dt, dP/dt, dRH/dt, d^2P/dt^2$.
     - Computes correlation $\rho_{T,RH} = \text{corr}(T, RH)$.
@@ -113,7 +113,7 @@ To avoid integration issues, members hand off components according to these cont
     python -c "from services.multi_scale_analyzer import multi_scale_analyzer; print('Analyzer ready')"
     ```
 
-- [ ] **Task 1.4: End-to-End System Test**
+- [x] **Task 1.4: End-to-End System Test**
   - Create `backend/tests/test_e2e_pipeline.py` verifying packet flow from ingestion ➔ multi-scale analyzer ➔ confluence engine ➔ maintenance ➔ DB write.
 
 ---

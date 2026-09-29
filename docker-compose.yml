@@ -1,9 +1,33 @@
 services:
-  mqtt:
+  mosquitto:
     image: eclipse-mosquitto:2
-    container_name: skyguard-mqtt
+    container_name: skyguard-mosquitto
     restart: unless-stopped
     ports:
       - "1883:1883"
     volumes:
-      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./deploy/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.backend
+    container_name: skyguard-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./skyguard.db
+      - MQTT_ENABLED=true
+      - MQTT_BROKER_HOST=mosquitto
+      - MQTT_BROKER_PORT=1883
+      - MQTT_TOPIC=skyguard/telemetry
+    depends_on:
+      - mosquitto
+    volumes:
+      - backend-data:/app/data
+
+volumes:
+  mosquitto-data:
+  backend-data:

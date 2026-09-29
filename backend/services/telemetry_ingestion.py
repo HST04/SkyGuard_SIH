@@ -8,6 +8,7 @@ from services.rule_engine import IMDPhysicsRuleEngine
 from services.sse_manager import sse_manager
 from services.sensor_health import sensor_health
 from services.confluence_engine import confluence_engine
+from services.multi_scale_analyzer import multi_scale_analyzer
 from data.store import store
 
 
@@ -54,9 +55,13 @@ class TelemetryIngestionService:
             payload.inference_time_ms = latency_ms
             payload.live_attributions = live_attributions
 
-            # Confluence Decision Matrix Engine (Mudit)
+            # Multi-Scale Multivariate Physical Analyzer (Hanswarup - Layer 2.1)
             window = recent_history + [payload]
-            confluence_res = confluence_engine.evaluate_window(window)
+            physical_features = multi_scale_analyzer.analyze_window(window)
+            payload.physical_features = physical_features
+
+            # Confluence Decision Matrix Engine (Mudit - Layer 2.3)
+            confluence_res = confluence_engine.evaluate_window(window, physical_features=physical_features)
             confluence_dict = dict(confluence_res)
             payload.confluence = confluence_dict
 

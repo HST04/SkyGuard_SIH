@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncEngine,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import String, Float, Integer, Text, select, update, desc
+from sqlalchemy import String, Float, Integer, Text, select, update, desc, text
 
 # Load environment variables
 base_dir = Path(__file__).resolve().parent
@@ -190,9 +190,12 @@ async def init_db() -> None:
     temp_sqlite_engine = create_async_engine(
         sqlite_url,
         echo=False,
+        connect_args={"timeout": 30.0},
     )
     async with temp_sqlite_engine.begin() as conn:
         try:
+            await conn.execute(text("PRAGMA journal_mode=WAL;"))
+            await conn.execute(text("PRAGMA busy_timeout=30000;"))
             await conn.run_sync(Base.metadata.create_all)
         except Exception as ddl_err:
             if "already exists" not in str(ddl_err).lower():

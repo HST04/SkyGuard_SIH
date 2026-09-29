@@ -6,10 +6,10 @@
     "semantic_hash": ""
   },
   "backend/data/db.py": {
-    "mtime": 1790664148.0989337,
-    "seen": 1790664917.954662,
-    "ast_hash": "647108d46a567947f89cd64a9e6007f1",
-    "semantic_hash": "647108d46a567947f89cd64a9e6007f1"
+    "mtime": 1790668457.6625504,
+    "seen": 1790668612.1327507,
+    "ast_hash": "22d7d673d89cd1ed97830780200c36f8",
+    "semantic_hash": ""
   },
   "backend/data/store.py": {
     "mtime": 1790666134.8440912,
@@ -54,10 +54,10 @@
     "semantic_hash": "e2a1b157bd379044d1b53edbcc6bee30"
   },
   "backend/services/anomaly_detector.py": {
-    "mtime": 1790084606.2810328,
-    "seen": 1790664917.9546914,
-    "ast_hash": "0ff7fa3c3790cfc75fe04f8504deb963",
-    "semantic_hash": "0ff7fa3c3790cfc75fe04f8504deb963"
+    "mtime": 1790668111.6552932,
+    "seen": 1790668192.6775334,
+    "ast_hash": "299562f6362c09493837e1450660fdeb",
+    "semantic_hash": ""
   },
   "backend/services/confluence_engine.py": {
     "mtime": 1790664148.109284,
@@ -341,12 +341,6 @@
     "ast_hash": "a0e4d192b9e2e17256124dbfc8e24e6a",
     "semantic_hash": ""
   },
-  ".agents/workflows/graphify.md": {
-    "mtime": 1790664842.6270225,
-    "seen": 1790666354.6333728,
-    "ast_hash": "a831cf3669f1e6ab85d8a80ebe655f99",
-    "semantic_hash": ""
-  },
   "HARSH_CHANGES.md": {
     "mtime": 1790664148.096096,
     "seen": 1790666354.6333742,
@@ -390,9 +384,9 @@
     "semantic_hash": ""
   },
   "TASKS.md": {
-    "mtime": 1790664148.0978408,
-    "seen": 1790666354.6333835,
-    "ast_hash": "f2370cd5bb7258e31d8db3ede270e03c",
+    "mtime": 1790666375.6382952,
+    "seen": 1790667926.5248682,
+    "ast_hash": "80e347d3adb3e9a863eae535c31d1137",
     "semantic_hash": ""
   },
   "backend/requirements.txt": {
@@ -459,6 +453,30 @@
     "mtime": 1790495394.6404266,
     "seen": 1790666354.6333978,
     "ast_hash": "be17711c9b4f0155b97fd0fad29191fe",
+    "semantic_hash": ""
+  },
+  "backend/tests/test_qa_backend_math_edge_cases.py": {
+    "mtime": 1790667784.5758903,
+    "seen": 1790667926.5247746,
+    "ast_hash": "a88bfa03b8256b1bf7c94513c6ddb62b",
+    "semantic_hash": ""
+  },
+  "backend/tests/test_qa_edge_telemetry_stress.py": {
+    "mtime": 1790667859.5570774,
+    "seen": 1790667926.5247772,
+    "ast_hash": "dba292a73af364ee72383e00a50efc09",
+    "semantic_hash": ""
+  },
+  ".agents/skills/graphify/SKILL.md": {
+    "mtime": 1790664842.6270225,
+    "seen": 1790667926.5248518,
+    "ast_hash": "a831cf3669f1e6ab85d8a80ebe655f99",
+    "semantic_hash": ""
+  },
+  "backend/tests/test_qa_ml_integration.py": {
+    "mtime": 1790668047.5395064,
+    "seen": 1790668192.6776197,
+    "ast_hash": "3af41612d371f5fa5db8a41c51aa1866",
     "semantic_hash": ""
   }
 }

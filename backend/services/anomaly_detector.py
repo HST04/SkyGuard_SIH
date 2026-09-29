@@ -145,6 +145,9 @@ class MultivariateAnomalyDetector:
         rh_delta = rh_recent[-1] - rh_recent[0]
         p_delta = p_recent[-1] - p_recent[0]
 
+        is_transient_drift = bool(t_delta > 0.3 and rh_delta > 4.0 and abs(p_delta) < 1.5)
+        is_steady_drift = bool(norm_matrix[-1, 1] > 0.95 and norm_matrix[-1, 0] > -0.2 and abs(p_delta) < 2.0)
+
         feature_errors = np.mean(norm_matrix[-3:, :] ** 2, axis=0)
 
         # Run ONNX inference if session is loaded
@@ -171,9 +174,6 @@ class MultivariateAnomalyDetector:
             decoupling_penalty = 0.0
             # Condition A: Rapid positive surge in RH while warm
             # Condition B: Steady elevated RH (+15% drift above diurnal expectation) while temperature is warm and pressure is stable
-            is_transient_drift = (t_delta > 0.3 and rh_delta > 4.0 and abs(p_delta) < 1.5)
-            is_steady_drift = (norm_matrix[-1, 1] > 0.95 and norm_matrix[-1, 0] > -0.2 and abs(p_delta) < 2.0)
-
             if is_transient_drift or is_steady_drift:
                 decoupling_penalty = 0.048
                 feature_errors[1] += 5.2 # Dominant humidity contribution

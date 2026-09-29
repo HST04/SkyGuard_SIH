@@ -7,6 +7,7 @@ from services.anomaly_detector import anomaly_detector
 from services.rule_engine import IMDPhysicsRuleEngine
 from services.sse_manager import sse_manager
 from services.sensor_health import sensor_health
+from services.confluence_engine import confluence_engine
 from data.store import store
 
 
@@ -53,9 +54,15 @@ class TelemetryIngestionService:
             payload.inference_time_ms = latency_ms
             payload.live_attributions = live_attributions
 
-            # Predictive maintenance + imputation (Harsh). When the confluence
-            # engine lands, pass its weather decision as weather_event=.
-            health = sensor_health.process(payload, detected_anomaly)
+            # Confluence Decision Matrix Engine (Mudit)
+            window = recent_history + [payload]
+            confluence_res = confluence_engine.evaluate_window(window)
+            confluence_dict = dict(confluence_res)
+            payload.confluence = confluence_dict
+
+            # Predictive maintenance + imputation (Harsh)
+            is_natural_weather = (confluence_res.get("classification") == "Natural Weather Event")
+            health = sensor_health.process(payload, detected_anomaly, weather_event=is_natural_weather)
             payload.maintenance = health["maintenance"]
             payload.imputation = health["imputation"]
             payload.weather = health["weather"]
@@ -64,11 +71,21 @@ class TelemetryIngestionService:
             await sse_manager.broadcast("telemetry", payload.model_dump())
 
             if detected_anomaly:
-                store.add_anomaly(detected_anomaly)
+                detected_anomaly.confluence = confluence_dict
+                store.add_anomaly(
+                    detected_anomaly,
+                    confluence_decision=confluence_res.get("classification"),
+                    confidence_score=confluence_res.get("confidence_score"),
+                )
                 await sse_manager.broadcast("anomaly", detected_anomaly.model_dump())
 
             if health["event"]:
-                store.add_anomaly(health["event"])
+                health["event"].confluence = confluence_dict
+                store.add_anomaly(
+                    health["event"],
+                    confluence_decision="Sensor Defect",
+                    confidence_score=confluence_res.get("confidence_score"),
+                )
                 await sse_manager.broadcast("anomaly", health["event"].model_dump())
 
             return detected_anomaly

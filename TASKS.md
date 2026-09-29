@@ -190,7 +190,7 @@ To avoid integration issues, members hand off components according to these cont
 2. The system requires a deterministic decision mechanism rather than arbitrary thresholds. Mudit implements the Confluence Decision Matrix (PRD Section 5.5) which reconciles Model A ($P(\text{Weather})$) and Model B ($P(\text{Defect})$) into a clear classification with a mathematical confidence score.
 
 #### Tasks:
-- [ ] **Task 4.1: Database Layer (Supabase PostgreSQL + SQLite Fallback)**
+- [x] **Task 4.1: Database Layer (Supabase PostgreSQL + SQLite Fallback)**
   - Create `backend/data/db.py`:
     - Connects using `DATABASE_URL` from `.env`, falls back to `sqlite+aiosqlite:///./skyguard.db`.
     - Tables: `telemetry_records`, `anomaly_incidents`, `maintenance_predictions`, `operator_feedback`.
@@ -201,7 +201,7 @@ To avoid integration issues, members hand off components according to these cont
     python -c "import asyncio; from data.db import init_db; asyncio.run(init_db()); print('DB verified')"
     ```
 
-- [ ] **Task 4.2: Classification Confluence Decision Matrix Engine (Layer 2.3)**
+- [x] **Task 4.2: Classification Confluence Decision Matrix Engine (Layer 2.3)**
   - Create `backend/services/confluence_engine.py`:
     - Loads `model_a_weather.pkl` and `model_b_defect.pkl` from `backend/ml_artifacts/`.
     - Decision Matrix Rules:
@@ -225,18 +225,18 @@ To avoid integration issues, members hand off components according to these cont
 3. All backend processing stages must execute in a consistent order on each 1-second packet and be broadcast over SSE to the frontend.
 
 #### Tasks:
-- [ ] **Task 5.1: Predictive Maintenance Engine (Layer 3.4)**
+- [x] **Task 5.1: Predictive Maintenance Engine (Layer 3.4)**
   - Create `backend/services/predictive_maintenance.py`:
     - Tracks daily EWMA residual drift ($\lambda = 0.2$) for Temperature, Humidity, and Pressure.
     - Warning threshold at $2.0\sigma \implies$ flags status as "At Risk".
     - Estimates days to recalibration: $\max(1, \lfloor(\text{tolerance} - \text{drift}) / \text{drift\_rate}\rfloor)$.
 
-- [ ] **Task 5.2: Imputation & Correction Module (Layer 3.5)**
+- [x] **Task 5.2: Imputation & Correction Module (Layer 3.5)**
   - Create `backend/services/imputation_engine.py`:
     - When Confluence confirms a `Sensor Defect`, estimates true value from surviving healthy channels.
     - Returns `{ "culprit": sensor_name, "reported_value": val, "suggested_value": corrected_val, "mae": 0.45 }`.
 
-- [ ] **Task 5.3: Pipeline Ingestion Orchestration & Schemas**
+- [x] **Task 5.3: Pipeline Ingestion Orchestration & Schemas**
   - Update `backend/models/schemas.py` with `ConfluenceResult`, `MaintenanceResult`, `ImputationResult`.
   - Update `backend/services/telemetry_ingestion.py` to route incoming packets sequentially through:
     1. IMD Physics Rule Check

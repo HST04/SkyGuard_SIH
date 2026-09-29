@@ -23,7 +23,8 @@ class TelemetryPayload(BaseModel):
     reconstruction_error: float = 0.0142
     inference_time_ms: float = 2.4
     live_attributions: List[ShapAttribution] = []
-    # Filled by services/sensor_health.py (Harsh)
+    # Filled by services/confluence_engine.py (Mudit) & services/sensor_health.py (Harsh)
+    confluence: Optional[Dict[str, Any]] = None
     maintenance: Optional[Dict[str, Any]] = None
     imputation: Optional[Dict[str, Any]] = None
     weather: Optional[Dict[str, Any]] = None
@@ -41,6 +42,7 @@ class AnomalyEvent(BaseModel):
     resolution_note: Optional[str] = None
     resolved_at: Optional[str] = None
     reconstruction_error: float = 0.0
+    confluence: Optional[Dict[str, Any]] = None
 
 class OperatorFeedback(BaseModel):
     anomaly_id: str

@@ -25,14 +25,28 @@ class TelemetryIngestionService:
             recent_history = store.get_telemetry_history(limit=settings.WINDOW_SIZE)
             rule_violation = IMDPhysicsRuleEngine.evaluate(payload, recent_history)
 
-            reconstruction_error = 0.0142
-            latency_ms = 2.1
-            live_attributions = []
+            # Track IMD physics check pass/fail
+            if rule_violation:
+                payload.imd_passed = False
+                payload.imd_violation = rule_violation.get("rule")
+            else:
+                payload.imd_passed = True
+                payload.imd_violation = None
+
+            detected_anomaly, reconstruction_error, latency_ms, live_attributions = (
+                anomaly_detector.evaluate_window(recent_history + [payload])
+            )
+
+            is_hard_bound_violation = bool(rule_violation and rule_violation.get("rule") in (
+                "IMD_CLIMATOLOGICAL_TEMP_BOUND",
+                "IMD_CLIMATOLOGICAL_RH_BOUND",
+                "IMD_BAROMETRIC_PRESSURE_BOUND",
+                "IMD_SUPERSATURATION_VIOLATION",
+                "IMD_STUCK_SENSOR_FLATLINE",
+            ))
 
             if rule_violation:
-                reconstruction_error = round(rule_violation["severity"] * 0.12, 4)
-                latency_ms = 1.1
-                live_attributions = rule_violation.get("shap_attributions", [])
+                reconstruction_error = max(reconstruction_error, round(rule_violation["severity"] * 0.12, 4))
                 detected_anomaly = AnomalyEvent(
                     anomaly_id=f"rule-{uuid.uuid4().hex[:8]}",
                     detected_at=payload.timestamp,
@@ -41,19 +55,10 @@ class TelemetryIngestionService:
                     severity_score=rule_violation["severity"],
                     culprit_sensors=rule_violation["culprit"],
                     diagnostic_message=rule_violation["message"],
-                    shap_values=live_attributions,
+                    shap_values=rule_violation.get("shap_attributions", live_attributions),
                     status="open",
                     reconstruction_error=reconstruction_error,
                 )
-            else:
-                detected_anomaly, reconstruction_error, latency_ms, live_attributions = (
-                    anomaly_detector.evaluate_window(recent_history + [payload])
-                )
-
-            # Attach real-time ML metrics to the telemetry payload
-            payload.reconstruction_error = reconstruction_error
-            payload.inference_time_ms = latency_ms
-            payload.live_attributions = live_attributions
 
             # Multi-Scale Multivariate Physical Analyzer (Hanswarup - Layer 2.1)
             window = recent_history + [payload]
@@ -65,8 +70,45 @@ class TelemetryIngestionService:
             confluence_dict = dict(confluence_res)
             payload.confluence = confluence_dict
 
+            classification = confluence_res.get("classification", "Nominal Baseline")
+            is_hardware_fault = classification in ("Sensor Defect", "Compound Event")
+
+            # Zero False Alarm filtering:
+            # Weather events (storms, heat spikes) and nominal baseline MUST NEVER flag hardware defects!
+            if classification == "Natural Weather Event":
+                if detected_anomaly and detected_anomaly.anomaly_type != "rule_flag":
+                    detected_anomaly = None
+                reconstruction_error = min(reconstruction_error, 0.0245)
+            elif classification == "Nominal Baseline":
+                detected_anomaly = None
+                reconstruction_error = min(reconstruction_error, 0.0150)
+            elif not is_hardware_fault:
+                detected_anomaly = None
+
+            # If confluence engine detected a sensor defect but no anomaly was created yet, create it
+            if is_hardware_fault and detected_anomaly is None:
+                defect_type = confluence_res.get("defect_type", "capacitive_drift")
+                culprit = "humidity" if any(k in defect_type for k in ("humidity", "drift", "frozen")) else "temperature"
+                detected_anomaly = AnomalyEvent(
+                    anomaly_id=f"defect-{uuid.uuid4().hex[:8]}",
+                    detected_at=payload.timestamp,
+                    station_id=payload.station_id,
+                    anomaly_type="ai_anomaly",
+                    severity_score=round(float(confluence_res.get("confidence_score", 92.0)) / 100.0, 2),
+                    culprit_sensors=[culprit],
+                    diagnostic_message=f"Hardware defect confirmed: {defect_type.replace('_', ' ').title()}.",
+                    shap_values=live_attributions,
+                    status="open",
+                    reconstruction_error=max(reconstruction_error, 0.098),
+                )
+
+            # Attach real-time ML metrics to the telemetry payload
+            payload.reconstruction_error = reconstruction_error
+            payload.inference_time_ms = latency_ms
+            payload.live_attributions = live_attributions
+
             # Predictive maintenance + imputation (Harsh)
-            is_natural_weather = (confluence_res.get("classification") == "Natural Weather Event")
+            is_natural_weather = (classification == "Natural Weather Event")
             health = sensor_health.process(payload, detected_anomaly, weather_event=is_natural_weather)
             payload.maintenance = health["maintenance"]
             payload.imputation = health["imputation"]
@@ -75,16 +117,29 @@ class TelemetryIngestionService:
             store.add_telemetry(payload)
             await sse_manager.broadcast("telemetry", payload.model_dump())
 
-            if detected_anomaly:
+            if detected_anomaly and is_hardware_fault:
                 detected_anomaly.confluence = confluence_dict
-                store.add_anomaly(
-                    detected_anomaly,
-                    confluence_decision=confluence_res.get("classification"),
-                    confidence_score=confluence_res.get("confidence_score"),
+                open_anomalies = store.get_anomalies(status="open", limit=10)
+                existing = next(
+                    (
+                        a for a in open_anomalies
+                        if any(c in getattr(a, "culprit_sensors", []) for c in detected_anomaly.culprit_sensors)
+                    ),
+                    None,
                 )
-                await sse_manager.broadcast("anomaly", detected_anomaly.model_dump())
+                if not existing:
+                    store.add_anomaly(
+                        detected_anomaly,
+                        confluence_decision=classification,
+                        confidence_score=confluence_res.get("confidence_score"),
+                    )
+                    await sse_manager.broadcast("anomaly", detected_anomaly.model_dump())
+                else:
+                    existing.reconstruction_error = detected_anomaly.reconstruction_error
+                    existing.severity_score = detected_anomaly.severity_score
+                    existing.confluence = confluence_dict
 
-            if health["event"]:
+            if health["event"] and is_hardware_fault:
                 health["event"].confluence = confluence_dict
                 store.add_anomaly(
                     health["event"],

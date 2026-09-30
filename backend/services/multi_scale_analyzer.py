@@ -143,7 +143,7 @@ class MultiScaleAnalyzer:
 
         # Decoupling Rule (Layer 2.1):
         # Thermodynamic decoupling occurs when Temperature and Humidity are positively correlated
-        # without significant barometric pressure drops (|dP/dt| < 2.0 hPa).
+        # (rho > 0.0) while pressure is stable (|dP/dt| < 2.0 hPa).
         decoupling_flag = bool(rho_t_rh > 0.0 and abs(derivs["dp_dt"]) < 2.0)
 
         temp = self._extract_val(curr, "temperature_c", 25.0)

@@ -33,6 +33,23 @@ class IMDPhysicsRuleEngine:
     MAX_RH_STEP_PER_SEC = 10.0
 
     @classmethod
+    def evaluate_reading(cls, reading: TelemetryPayload) -> Tuple[bool, Optional[str]]:
+        """
+        Evaluates whether an individual telemetry packet satisfies local IMD physical bounds.
+        Returns (True, None) if valid, or (False, rule_name) if bound violated.
+        """
+        if reading.temperature_c < cls.TEMP_MIN or reading.temperature_c > cls.TEMP_MAX:
+            return False, "IMD_CLIMATOLOGICAL_TEMP_BOUND"
+        if reading.humidity_pct < cls.RH_MIN or reading.humidity_pct > cls.RH_MAX:
+            return False, "IMD_CLIMATOLOGICAL_RH_BOUND"
+        if reading.pressure_hpa < cls.PRESS_MIN or reading.pressure_hpa > cls.PRESS_MAX:
+            return False, "IMD_BAROMETRIC_PRESSURE_BOUND"
+        calculated_td = calculate_dew_point(reading.temperature_c, reading.humidity_pct)
+        if calculated_td > reading.temperature_c + 1.0:
+            return False, "IMD_SUPERSATURATION_VIOLATION"
+        return True, None
+
+    @classmethod
     def evaluate(
         cls, 
         current: TelemetryPayload, 
@@ -91,47 +108,77 @@ class IMDPhysicsRuleEngine:
                 ]
             }
 
-        # 3. Dynamic Step Checks (Requires previous reading)
+        # 3. Dynamic Step Checks (Requires valid consecutive reading)
         if history and len(history) >= 1:
             prev = history[-1]
-            dt_temp = abs(current.temperature_c - prev.temperature_c)
-            dt_press = abs(current.pressure_hpa - prev.pressure_hpa)
-            dt_rh = abs(current.humidity_pct - prev.humidity_pct)
+            can_check_step = (
+                prev.station_id == current.station_id
+                and prev.source == current.source
+                and (0 < current.sequence - prev.sequence <= 2)
+            )
 
-            if dt_temp > cls.MAX_TEMP_STEP_PER_SEC:
-                return {
-                    "rule": "IMD_TEMP_RATE_OF_CHANGE_EXCEEDED",
-                    "culprit": ["temperature"],
-                    "severity": 0.88,
-                    "message": f"Sudden thermal transient detected: ΔT of {dt_temp:.2f}°C/s exceeds physical thermal inertia limit.",
-                    "shap_attributions": [
-                        ShapAttribution(feature="dT_dt", importance=0.89, direction="positive", message="Severe thermal step change detected.")
-                    ]
-                }
+            dt_sec = 1.0
+            if can_check_step:
+                try:
+                    from datetime import datetime as dt_parser
+                    t_curr = dt_parser.fromisoformat(current.timestamp.replace("Z", "+00:00")).timestamp()
+                    t_prev = dt_parser.fromisoformat(prev.timestamp.replace("Z", "+00:00")).timestamp()
+                    delta_s = t_curr - t_prev
+                    if 0.1 <= delta_s <= 3.5:
+                        dt_sec = delta_s
+                    elif delta_s > 3.5:
+                        # Gaps between packets (pause, restart, network lag) invalidate rate-of-change per second
+                        can_check_step = False
+                except Exception:
+                    dt_sec = 1.0
 
-            if dt_press > cls.MAX_PRESS_STEP_PER_SEC:
-                return {
-                    "rule": "IMD_PRESSURE_BURST_EXCEEDED",
-                    "culprit": ["pressure"],
-                    "severity": 0.85,
-                    "message": f"Sudden barometric discontinuity: ΔP of {dt_press:.2f} hPa/s exceeds atmospheric front velocity.",
-                    "shap_attributions": [
-                        ShapAttribution(feature="dP_dt", importance=0.86, direction="negative", message="Rapid pressure drop rate observed.")
-                    ]
-                }
+            if can_check_step:
+                dt_temp = abs(current.temperature_c - prev.temperature_c) / dt_sec
+                dt_press = abs(current.pressure_hpa - prev.pressure_hpa) / dt_sec
+                dt_rh = abs(current.humidity_pct - prev.humidity_pct) / dt_sec
 
-            if dt_rh > cls.MAX_RH_STEP_PER_SEC:
-                return {
-                    "rule": "IMD_HUMIDITY_SPIKE_EXCEEDED",
-                    "culprit": ["humidity"],
-                    "severity": 0.82,
-                    "message": f"Rapid humidity jump: ΔRH of {dt_rh:.1f}%/s exceeds physical diffusion rate.",
-                    "shap_attributions": [
-                        ShapAttribution(feature="dRH_dt", importance=0.84, direction="positive", message="Capacitive humidity sensor pulse detected.")
-                    ]
-                }
+                # Coupled severe squall / storm front check:
+                # During severe convective storms, coupled barometric plunge + RH surge is valid meteorology, not a sensor fault!
+                is_squall = (
+                    (current.pressure_hpa - prev.pressure_hpa <= -3.0 and current.humidity_pct - prev.humidity_pct >= 10.0)
+                    or (current.pressure_hpa <= 998.0 and current.humidity_pct >= 85.0 and current.temperature_c <= 26.0)
+                )
 
-        # 4. Flatline / Stuck Sensor Check (Last 10 identical readings)
+                if not is_squall:
+                    if dt_temp > cls.MAX_TEMP_STEP_PER_SEC:
+                        return {
+                            "rule": "IMD_TEMP_RATE_OF_CHANGE_EXCEEDED",
+                            "culprit": ["temperature"],
+                            "severity": 0.88,
+                            "message": f"Sudden thermal transient detected: ΔT of {dt_temp:.2f}°C/s exceeds physical thermal inertia limit.",
+                            "shap_attributions": [
+                                ShapAttribution(feature="dT_dt", importance=0.89, direction="positive", message="Severe thermal step change detected.")
+                            ]
+                        }
+
+                    if dt_press > cls.MAX_PRESS_STEP_PER_SEC:
+                        return {
+                            "rule": "IMD_PRESSURE_BURST_EXCEEDED",
+                            "culprit": ["pressure"],
+                            "severity": 0.85,
+                            "message": f"Sudden barometric discontinuity: ΔP of {dt_press:.2f} hPa/s exceeds atmospheric front velocity.",
+                            "shap_attributions": [
+                                ShapAttribution(feature="dP_dt", importance=0.86, direction="negative", message="Rapid pressure drop rate observed.")
+                            ]
+                        }
+
+                    if dt_rh > cls.MAX_RH_STEP_PER_SEC:
+                        return {
+                            "rule": "IMD_HUMIDITY_SPIKE_EXCEEDED",
+                            "culprit": ["humidity"],
+                            "severity": 0.82,
+                            "message": f"Rapid humidity jump: ΔRH of {dt_rh:.1f}%/s exceeds physical diffusion rate.",
+                            "shap_attributions": [
+                                ShapAttribution(feature="dRH_dt", importance=0.84, direction="positive", message="Capacitive humidity sensor pulse detected.")
+                            ]
+                        }
+
+        # 4. Flatline / Stuck Sensor Check (Last 8 identical readings)
         if history and len(history) >= 8:
             recent_rh = [p.humidity_pct for p in history[-8:]] + [current.humidity_pct]
             if len(set(recent_rh)) == 1 and (current.humidity_pct == 100.0 or current.humidity_pct == 0.0):

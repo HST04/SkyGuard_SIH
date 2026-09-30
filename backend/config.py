@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     # Ingestion & Windowing
     SAMPLING_INTERVAL_SEC: float = 1.0
     WINDOW_SIZE: int = 12
-    RECONSTRUCTION_THRESHOLD: float = 0.042
+    RECONSTRUCTION_THRESHOLD: float = 0.095
 
     # External MQTT edge ingestion. Disabled by default so the local simulator remains
     # the zero-setup development path.

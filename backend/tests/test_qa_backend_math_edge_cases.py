@@ -311,12 +311,11 @@ class TestConfluenceEngineEdgeCases:
             {"pressure_hpa": 1000.0, "humidity_pct": 85.0, "temperature_c": 28.0, "wind_speed_ms": 15.0},
         ]
         res = engine.evaluate_window(dict_window)
-        # Because getattr(dict, "pressure_hpa", 1005.0) returns 1005.0 for both curr and prev,
-        # dt_p is 0.0, dt_rh is 0.0, and severe weather is MISSED!
-        assert res.p_weather == 0.05, "Confirmed bug: evaluate_window cannot read dicts and defaults p_weather to 0.05"
+        # Dictionaries are now seamlessly supported, correctly recognizing the severe squall
+        assert res.p_weather >= 0.70, "Severe squall passed as dictionaries is correctly recognized"
 
     def test_evaluate_window_none_attribute_crash(self, engine):
-        """Test crash when an object has an attribute explicitly set to None."""
+        """Test resilience when an object has an attribute explicitly set to None."""
         class MockReading:
             pressure_hpa = None
             humidity_pct = 60.0
@@ -324,10 +323,9 @@ class TestConfluenceEngineEdgeCases:
             wind_speed_ms = 2.0
             reconstruction_error = 0.01
 
-        # getattr(curr, "pressure_hpa", 1005.0) returns None because the attribute exists!
-        # Then float(None) raises TypeError.
-        with pytest.raises(TypeError, match="float\\(\\) argument must be a string or a real number, not 'NoneType'"):
-            engine.evaluate_window([MockReading(), MockReading()])
+        # ConfluenceEngine safely handles None without raising TypeError
+        res = engine.evaluate_window([MockReading(), MockReading()])
+        assert res is not None
 
 
 # ==============================================================================

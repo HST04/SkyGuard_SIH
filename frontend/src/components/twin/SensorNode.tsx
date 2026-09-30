@@ -67,14 +67,14 @@ export function SensorNode({ id, label, position, children, readingValue, unit }
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {/* Pulsing Highlight Shell */}
-      <mesh ref={glowMeshRef}>
-        <sphereGeometry args={[0.5, 24, 24]} />
+      {/* Sleek Cyber Targeting Ring */}
+      <mesh ref={glowMeshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
+        <ringGeometry args={[0.25, 0.32, 32]} />
         <meshBasicMaterial
           color={glowColor}
           transparent
           opacity={0}
-          wireframe
+          side={THREE.DoubleSide}
           depthWrite={false}
         />
       </mesh>

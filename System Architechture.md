@@ -33,17 +33,18 @@ Deploying an end-to-end Machine Learning pipeline on real-world Automatic Weathe
 SkyGuard AI resolves these bottlenecks through **three foundational design principles**:
 
 1. **Split-Architecture Deployment (Edge ↔ Cloud)**: 
-   The front line operates on an ultra-low-power microcontroller (ESP32) performing rapid, two-stage local filtering: zero-cost deterministic IMD physical limit checks and quantized micro outlier detection (Quantized PyOD / TFLite Micro). Nominal data is recorded locally; only anomalous events trigger an uplink burst containing the incident reading along with a multi-hour contextual sliding window. This reduces wireless bandwidth usage by >90% while keeping cloud compute focused solely on ambiguous anomalies.
+   The front line operates on an ultra-low-power microcontroller (ESP32) performing rapid, two-stage local filtering: zero-cost deterministic IMD physical limit checks and quantized temporal anomaly detection (1D-CNN Temporal Autoencoder in ONNX / TFLite Micro). Nominal data is recorded locally; only anomalous events trigger an uplink burst containing the incident reading along with a multi-hour contextual sliding window. This reduces wireless bandwidth usage by >90% while keeping cloud compute focused solely on ambiguous anomalies.
 2. **Structured Reasoning via Classification Confluence**: 
    Rather than relying on non-deterministic LLM agent dialogues, SkyGuard AI formalizes multi-agent reasoning into a rigorous **Classification Confluence Matrix**:
-   - **Model A (Weather Classifier)**: Trained on meteorological event signatures (severe storms, frontal passages, squall lines, diurnal swings).
-   - **Model B (Sensor Defect Classifier)**: Specially trained on synthetically injected sensor failure archetypes (frozen flatlines, random impulse spikes, high-frequency Gaussian noise, calibration drift, packet dropouts) to circumvent the lack of real defect data.
+   - **1D-CNN Autoencoder (`autoencoder.onnx`)**: Multivariate reconstruction model evaluating 12-timestep temporal sliding windows across 8 meteorological features with calibrated baseline scaling (`scaler.json`).
+   - **Model A (Weather Classifier - `model_a_weather.pkl`)**: Random Forest classifier trained on meteorological event signatures (severe storms, frontal passages, squall lines, diurnal swings).
+   - **Model B (Sensor Defect Classifier - `model_b_defect.pkl`)**: Random Forest classifier diagnosing 6 distinct hardware defect archetypes (frozen flatlines, random impulse spikes, noise bursts, capacitive drift, packet dropouts, nominal).
    - **Confluence Engine**: A deterministic confidence-scoring matrix evaluates Model A and Model B in tandem, producing definitive alert classifications with mathematically sound confidence metrics ($0-100\%$).
 3. **Full-Cycle Telemetry Health (Predictive Maintenance & Imputation)**:
    Beyond binary alerting, the architecture completes the full data-quality lifecycle:
    - **Explainable AI (XAI) Hub**: Quantifies feature attributions via SHAP bar charts alongside natural-language diagnostic justifications.
    - **Sensor Health & Predictive Maintenance (3.4)**: Monitors long-term temporal drift to forecast sensor recalibration weeks before total breakdown occurs.
-   - **Imputation & Correction Module (3.5)**: When a sensor defect is confirmed, a multivariate regression / LSTM model reconstructs the corrupted parameter using healthy cross-correlated channels.
+   - **Imputation & Correction Module (3.5)**: When a sensor defect is confirmed, a multivariate regression / thermodynamic model reconstructs the corrupted parameter using healthy cross-correlated channels.
 
 ---
 
@@ -55,7 +56,7 @@ The system is structured into three discrete layers: **1.0 Edge Device Layer**, 
 flowchart TD
     subgraph L1["1.0 Edge Device Layer (ESP32 Deployment)"]
         SENS["Sensors (T, P, RH)"] --> R11["1.1 IMD Plausibility Check (Logical Filter)"]
-        R11 -->|Pass Range| ML12["1.2 Quantized PyOD (Lightweight Outlier Detection)<br/>Quantized TFLite Micro Model"]
+        R11 -->|Pass Range| ML12["1.2 1D-CNN Temporal Autoencoder<br/>(Quantized ONNX / TFLite Micro, 12 Timesteps)"]
         R11 -->|Fail Extreme Limit| ED13{"Edge Decision"}
         ML12 --> ED13
         ED13 -->|Normal Data| STORE13[("Local Data Store<br/>(Minimal Rolling Buffer)")]
@@ -67,8 +68,8 @@ flowchart TD
         AN21 --> ST21["Short-term Multivariate Analysis"]
         AN21 --> LT21["Long-term Temporal/Seasonal Analysis"]
         
-        ST21 --> MODA["Model A<br/>(Weather Classifier)"]
-        ST21 --> MODB["Model B<br/>(Sensor Defect Classifier)<br/>Trained on Synthetic Fault Injections"]
+        ST21 --> MODA["Model A<br/>(Weather Classifier: Random Forest)"]
+        ST21 --> MODB["Model B<br/>(Sensor Defect Classifier: 6 Classes)<br/>Trained on Synthetic Fault Injections"]
         
         MODA --> CONF23["2.3 Classification Confluence & Confidence Scoring<br/>(Decision Matrix)"]
         MODB --> CONF23
@@ -124,12 +125,12 @@ graph LR
 |---|---|---|---|
 | **1.0 Edge Device Layer** | ESP32, C++ / FreeRTOS, TFLite Micro | Front-line sensory acquisition and dual-stage pre-filtering at the physical node. | Conserves >90% cellular/LoRaWAN bandwidth and avoids cloud compute fatigue. |
 | **1.1 IMD Plausibility Check** | Deterministic boundary rules | Rigid climatological filters based on established IMD thresholds (e.g., $T < 0^\circ\text{C}$ in Agra during May). | Computationally free on microcontrollers; instant rejection of impossible readings. |
-| **1.2 Quantized PyOD** | Quantized Autoencoder / Elliptic Envelope in TFLite Micro | Minimal multivariate statistical model checking short-term consistency across $T$, $P$, and $RH$. | Sub-15 ms inference on ESP32 running within 320 KB SRAM. |
+| **1.2 1D-CNN Temporal Autoencoder** | Quantized Autoencoder (ONNX / TFLite Micro, 12 Timesteps) | Multivariate temporal reconstruction checking short-term consistency across $T$, $P$, and $RH$. | Sub-15 ms inference on edge CPU / microcontroller. |
 | **1.3 Edge Decision & Context Buffer** | Ring Buffer (SRAM / Flash SPIFFS) | Evaluates local anomaly status; stores normal telemetry locally, and transmits flagged readings with a 2–4 hour pre-anomaly context buffer. | Cloud receives full temporal dynamics leading up to an anomaly without 24/7 continuous raw streaming. |
 | **2.0 Cloud Analytics Layer** | FastAPI, Python 3.11, Docker, PyTorch / ONNX | High-performance backend running deep temporal and multivariate analytics on flagged incident buffers. | Offloads heavy computation from edge nodes to scalable cloud infrastructure. |
 | **2.1 Multi-Scale Multivariate Analyzer** | Sliding Window Tensor Processor | Evaluates short-term cross-sensor consistency ($T \leftrightarrow P \leftrightarrow RH$) and long-term seasonal baselines. | Distinguishes coordinated meteorological shifts from single-sensor physical failures. |
-| **2.2 Model A (Weather Classifier)** | Gradient Boosted Classifier / 1D-CNN | Specifically trained to recognize legitimate meteorological phenomenon (thunderstorms, cold fronts, squalls, diurnal peaks). | High recall on complex natural events to prevent false alarms. |
-| **2.2 Model B (Sensor Defect Classifier)** | Supervised Classifier trained on synthetic injected faults | Trained on synthetic failure patterns: frozen values, sudden single-point spikes, Gaussian noise bursts, and progressive drift. | Bypasses the lack of real sensor failure datasets by mathematically generating defect signatures. |
+| **2.2 Model A (Weather Classifier)** | Random Forest Classifier (`model_a_weather.pkl`) | Specifically trained to recognize legitimate meteorological phenomena (thunderstorms, cold fronts, squalls, diurnal peaks). | Zero false alarms on extreme weather. |
+| **2.2 Model B (Sensor Defect Classifier)** | Random Forest 6-Class Classifier (`model_b_defect.pkl`) | Classifies failure archetypes: frozen flatlines, impulse spikes, noise bursts, capacitive drift, and packet dropouts. | Rigorous root-cause isolation. |
 | **2.3 Classification Confluence & Confidence Scoring** | Deterministic Confluence Truth Table | Fuses predictions from Model A and Model B into a unified decision matrix with confidence scores ($0-100\%$). | Replaces non-deterministic LLM chat dialogues with auditable, reproducible AI reasoning. |
 | **2.4 Explainable AI (XAI) Hub** | SHAP (`GradientExplainer` / `TreeExplainer`) | Computes feature attribution vectors and formats plain-English diagnostic justifications for operators. | Eliminates black-box distrust; gives field technicians specific hardware culprits. |
 | **3.0 Visualization & Alerting Layer** | Next.js 14, React Three Fiber, Tailwind CSS | Unified web dashboard featuring a clickable 3D digital twin of AWS station `AGRA-01`. | Real-time visual clarity for non-technical stakeholders and engineers alike. |
@@ -204,13 +205,14 @@ Deterministic bounds tuned to regional Indian climatology (e.g., Uttar Pradesh /
 | **Dew Point Consistency ($T_d$)** | $T_d \le T + 0.5^\circ\text{C}$ | Magnus physical formula check | Supersaturation impossibility |
 | **Flatline Detection** | Non-zero variance | Exact same value for $> 45\text{ min}$ | Frozen ADC / stuck sensor |
 
-### 5.2 Layer 1.2: Quantized PyOD / TFLite Micro
+### 5.2 Layer 1.2: 1D-CNN Temporal Autoencoder (ONNX / TFLite Micro)
 
-- **Target Architecture**: Quantized Autoencoder or Minimum Covariance Determinant (MCD) implemented via TensorFlow Lite for Microcontrollers.
-- **Model Size**: $< 120\,\text{KB}$ INT8 weights.
-- **Window Length**: 12 timesteps (representing rolling history).
-- **Inference Time**: $< 15\,\text{ms}$ on an ESP32-S3 (240 MHz dual-core Xtensa).
-- **Execution Principle**: If the reconstruction error or Mahalanobis distance exceeds threshold $\tau_{\text{edge}}$, the edge transitions from local buffering to incident transmission.
+- **Target Architecture**: 1D Convolutional Neural Network Autoencoder (`autoencoder.onnx`, 8 input channels, sequence length 12).
+- **Features Analyzed**: `[temperature_c, humidity_pct, pressure_hpa, dew_point_c, wind_speed_ms, solar_radiation_wm2, dT/dt, dP/dt]` normalized via calibrated baseline parameters (`scaler.json`).
+- **Model Size**: $< 10\,\text{KB}$ ONNX / INT8 weights.
+- **Window Length**: 12 timesteps (representing rolling temporal sequence).
+- **Inference Time**: $< 5\,\text{ms}$ on CPU and edge microcontroller.
+- **Execution Principle**: If the reconstruction MSE exceeds threshold $\tau = 0.042$, the engine flags an anomaly and transmits the incident buffer to Layer 2.3 for classification confluence.
 
 ### 5.3 Layer 2.1: Multi-Scale Multivariate Analyzer
 
@@ -409,10 +411,10 @@ The Next.js 14 web client translates analytical confluence into immediate operat
 | Component | Target Physical Deployment | Emulated / Demo Mode |
 |---|---|---|
 | **Edge Hardware** | ESP32-S3 (Xtensa Dual-Core, 512KB SRAM, 8MB Flash) | Python Edge Simulator (`backend/simulator/client.py`) |
-| **Edge Inference** | TensorFlow Lite for Microcontrollers (INT8 quantized) | PyOD / ONNX Runtime in Python environment |
+| **Edge Inference** | TensorFlow Lite for Microcontrollers (INT8 quantized) | 1D-CNN ONNX Runtime in Python environment |
 | **Broker** | Eclipse Mosquitto (Dockerized, TLS 8883) | Local Mosquitto on Docker (`localhost:1883`) |
 | **Cloud Core** | FastAPI on Linux Host / Azure VM | FastAPI ASGI Server (`uvicorn main:app`) |
-| **Dual Models** | LightGBM / 1D-CNN (Model A) & Injected-Fault Model B | PyTorch / Scikit-Learn pipelines in Python |
+| **Dual Models** | Random Forest Weather Model A & Defect Model B | Scikit-Learn Random Forests (`.pkl`) in Python |
 | **Explainability** | SHAP (`TreeExplainer` / `GradientExplainer`) | SHAP library with pre-sampled background tensors |
 | **Database** | Supabase Cloud (Managed PostgreSQL with pgvector) | Supabase Cloud / In-memory data store |
 | **Operator UI** | Next.js 14 App Router on Vercel | Local Node.js server (`localhost:3000`) |
@@ -424,7 +426,7 @@ The Next.js 14 web client translates analytical confluence into immediate operat
 1. **Baseline Ingestion (Status Green)**: The edge device streams nominal diurnal cycles. The 3D Digital Twin reflects nominal conditions, and Sensor Health reads **Healthy**.
 2. **True-Negative Meteorological Test (Thunderstorm Ingestion)**: A rapid barometric pressure plunge accompanied by a thermodynamic temperature drop and humidity climb is simulated. Model A flags a weather event with 96% confidence; Model B flags zero defect signature. The Confluence Matrix registers **Natural Weather Event**; the 3D twin remains green with zero false alarm.
 3. **Synthetic Defect Test (Capacitive RH Freeze)**: The relative humidity reading is artificially frozen at 84.2% while temperature continues its natural diurnal curve.
-4. **Edge Filtering & Context Burst**: Layer 1.1 passes because 84.2% is within 0–100%, but Layer 1.2 (Quantized PyOD) flags the multivariate correlation breach. The edge immediately transmits the incident packet and the preceding 2-hour context buffer.
+4. **Edge Filtering & Context Burst**: Layer 1.1 passes because 84.2% is within 0–100%, but Layer 1.2 (1D-CNN Autoencoder) flags the multivariate correlation breach. The edge immediately transmits the incident packet and the preceding 2-hour context buffer.
 5. **Cloud Confluence & Triage**: Model B detects the flatline signature ($P(\text{Defect}) = 0.94$); Model A confirms low weather likelihood ($P(\text{Weather}) = 0.08$). The Confluence Engine fires a **Sensor Defect Alert** at 92.4% confidence.
 6. **XAI Explanation & 3D Auto-Lerp**: The Next.js dashboard flashes red; the camera automatically glides and zooms into the humidity sensor shield. The Explainable Report Viewer renders the natural-language diagnostic and SHAP bar chart highlighting Relative Humidity as the 88% driver.
 7. **Predictive Maintenance Alert**: The operator inspects the Sensor Health tab, showing long-term cumulative pressure drift approaching the recalibration threshold.

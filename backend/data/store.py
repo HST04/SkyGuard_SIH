@@ -48,6 +48,7 @@ class InMemoryStore:
         self._active_fault: str = "normal"
         self._fault_expires_at: Optional[float] = None
         self._fault_intensity: float = 1.0
+        self._last_external_telemetry_at: float = 0.0
 
         # Non-blocking async persistence queue
         self._persist_queue: queue.Queue = queue.Queue(maxsize=10000)
@@ -228,6 +229,9 @@ class InMemoryStore:
             self._fault_intensity = intensity
             if fault_type == "normal":
                 self._fault_expires_at = None
+                for a in self._anomalies.values():
+                    if a.status == "open":
+                        a.status = "resolved"
             else:
                 self._fault_expires_at = time.time() + duration_seconds
 
@@ -249,6 +253,16 @@ class InMemoryStore:
         deadline = time.time() + timeout
         while (not self._persist_queue.empty() or self._persist_queue.unfinished_tasks > 0) and time.time() < deadline:
             time.sleep(0.05)
+
+    def record_external_telemetry(self) -> None:
+        import time
+        with self._lock:
+            self._last_external_telemetry_at = time.time()
+
+    def is_external_telemetry_active(self, timeout_sec: float = 5.0) -> bool:
+        import time
+        with self._lock:
+            return (time.time() - getattr(self, "_last_external_telemetry_at", 0.0)) < timeout_sec
 
     def clear(self) -> None:
         """Clears in-memory history and active anomalies (useful for testing)."""

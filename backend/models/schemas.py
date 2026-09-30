@@ -23,6 +23,8 @@ class TelemetryPayload(BaseModel):
     reconstruction_error: float = 0.0142
     inference_time_ms: float = 2.4
     live_attributions: List[ShapAttribution] = []
+    imd_passed: bool = True
+    imd_violation: Optional[str] = None
     # Filled by services/confluence_engine.py (Mudit) & services/sensor_health.py (Harsh) & services/multi_scale_analyzer.py (Hanswarup)
     confluence: Optional[Dict[str, Any]] = None
     maintenance: Optional[Dict[str, Any]] = None

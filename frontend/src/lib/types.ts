@@ -18,11 +18,16 @@ export type ConfluenceClassification =
 export interface ConfluenceResult {
   classification: ConfluenceClassification;
   confidence: number; // 0.0 - 1.0 (or percentage e.g. 92.4%)
+  confidence_score?: number; // 0 - 100
   p_weather: number;  // 0.0 - 1.0
   p_defect: number;   // 0.0 - 1.0
   defect_class?: string;
+  defect_type?: string;
   summary?: string;
   action_recommended?: string;
+  action_taken?: string;
+  severity?: string;
+  operator_alert?: boolean;
 }
 
 export type MaintenanceHealthStatus =
@@ -86,6 +91,8 @@ export interface TelemetryPayload {
   reconstruction_error: number;
   inference_time_ms: number;
   live_attributions: ShapAttribution[];
+  imd_passed?: boolean;
+  imd_violation?: string;
   // Extended fields
   confluence?: ConfluenceResult;
   maintenance?: MaintenanceResult;

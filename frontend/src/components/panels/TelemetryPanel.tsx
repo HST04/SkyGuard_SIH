@@ -85,59 +85,83 @@ export function TelemetryPanel() {
     },
   ];
 
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-      {metrics.map((metric) => {
-        const Icon = metric.icon;
-        const isSelected = selectedSensor === metric.id;
-        const isCulprit = openAnomalies.some((a) => a.culprit_sensors && a.culprit_sensors.includes(metric.id));
+  const coreMetrics = metrics.slice(0, 4);
+  const auxMetrics = metrics.slice(4);
 
-        return (
-          <div
-            key={metric.id}
-            onClick={() => setSelectedSensor(metric.id === selectedSensor ? 'station' : metric.id)}
-            className={`cursor-pointer rounded-xl p-3 border transition-all ${
-              isCulprit
-                ? 'bg-rose-950/40 border-rose-500/60 shadow-glow-rose'
-                : isSelected
-                ? 'bg-cyan-950/40 border-cyan-500/60 shadow-glow-cyan'
-                : 'glass-panel-interactive border-white/10'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <Icon
-                  className={`w-4 h-4 ${
-                    isCulprit ? 'text-rose-400 animate-pulse' : isSelected ? 'text-cyan-400' : 'text-slate-400'
-                  }`}
-                />
-                <span className="text-xs font-mono font-medium text-slate-300 truncate">
-                  {metric.label}
-                </span>
-              </div>
-              {isCulprit ? (
-                <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-rose-500/30 text-rose-300 font-bold border border-rose-500/40">
-                  FLAGGED
-                </span>
-              ) : (
-                <span className="text-[10px] font-mono text-slate-500">{metric.shortLabel}</span>
-              )}
-            </div>
+  const renderCard = (metric: typeof metrics[0]) => {
+    const Icon = metric.icon;
+    const isSelected = selectedSensor === metric.id;
+    const isCulprit = openAnomalies.some((a) => a.culprit_sensors && a.culprit_sensors.includes(metric.id));
 
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-mono font-bold text-white tracking-tight">
-                {metric.value}
-              </span>
-              <span className="text-xs font-mono text-slate-400 font-medium">{metric.unit}</span>
-            </div>
-
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-[10px] font-mono">
-              <span className="text-slate-400">{metric.delta}</span>
-              <span className="text-slate-500">{metric.nominal}</span>
-            </div>
+    return (
+      <div
+        key={metric.id}
+        onClick={() => setSelectedSensor(metric.id === selectedSensor ? 'station' : metric.id)}
+        className={`cursor-pointer rounded-xl p-2.5 border transition-all ${
+          isCulprit
+            ? 'bg-rose-950/40 border-rose-500/60 shadow-glow-rose'
+            : isSelected
+            ? 'bg-cyan-950/40 border-cyan-500/60 shadow-glow-cyan'
+            : 'glass-panel-interactive border-white/10 hover:border-white/20'
+        }`}
+      >
+        <div className="flex items-center justify-between gap-1 mb-1">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Icon
+              className={`w-3.5 h-3.5 flex-shrink-0 ${
+                isCulprit ? 'text-rose-400 animate-pulse' : isSelected ? 'text-cyan-400' : 'text-slate-400'
+              }`}
+            />
+            <span className="text-[11px] font-mono font-medium text-slate-300 truncate">
+              {metric.label}
+            </span>
           </div>
-        );
-      })}
+          {isCulprit ? (
+            <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-rose-500/30 text-rose-300 font-bold border border-rose-500/40 flex-shrink-0">
+              FAULT
+            </span>
+          ) : (
+            <span className="text-[10px] font-mono text-slate-500 flex-shrink-0">{metric.shortLabel}</span>
+          )}
+        </div>
+
+        <div className="flex items-baseline gap-1 my-0.5">
+          <span className="text-xl font-mono font-bold text-white tracking-tight">
+            {metric.value}
+          </span>
+          <span className="text-[11px] font-mono text-slate-400 font-medium">{metric.unit}</span>
+        </div>
+
+        <div className="flex items-center justify-between pt-1.5 border-t border-white/5 text-[9px] font-mono">
+          <span className="text-slate-400 truncate mr-1">{metric.delta}</span>
+          <span className="text-slate-500 flex-shrink-0">{metric.nominal}</span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Core SIH Meteorological Parameters */}
+      <div>
+        <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-400 mb-1.5 px-0.5 flex items-center justify-between">
+          <span>Core Atmospheric Sensors (SIH Scope)</span>
+          <span className="text-cyan-400 text-[9px]">1 Hz Live</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {coreMetrics.map(renderCard)}
+        </div>
+      </div>
+
+      {/* Auxiliary Station Met Suite */}
+      <div>
+        <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-500 mb-1.5 px-0.5">
+          Auxiliary Met Suite
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {auxMetrics.map(renderCard)}
+        </div>
+      </div>
     </div>
   );
 }

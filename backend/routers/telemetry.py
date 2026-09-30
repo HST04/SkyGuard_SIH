@@ -7,8 +7,28 @@ from config import settings
 from data.store import store
 from models.schemas import TelemetryPayload, StationOverview
 from services.sse_manager import sse_manager
+from services.telemetry_ingestion import telemetry_ingestion
 
 router = APIRouter(prefix="/telemetry", tags=["Telemetry"])
+
+@router.post("/ingest")
+async def ingest_telemetry_packet(payload: TelemetryPayload):
+    """
+    Direct ingestion endpoint for external edge devices / edge_runner.py scripts.
+    Automatically marks external telemetry as active so internal simulator yields.
+    """
+    store.record_external_telemetry()
+    anomaly = await telemetry_ingestion.ingest(payload)
+    return {
+        "status": "success",
+        "station_id": payload.station_id,
+        "sequence": payload.sequence,
+        "reconstruction_error": payload.reconstruction_error,
+        "confluence": payload.confluence,
+        "anomaly_detected": anomaly is not None,
+        "anomaly": anomaly.model_dump() if anomaly else None,
+        "imputation": payload.imputation
+    }
 
 @router.get("/latest", response_model=Optional[TelemetryPayload])
 async def get_latest_telemetry(station_id: str = Query(settings.STATION_ID)):

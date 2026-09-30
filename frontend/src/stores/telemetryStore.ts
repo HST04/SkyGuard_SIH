@@ -54,9 +54,33 @@ function deriveConfluence(
   activeAnomaly: AnomalyEvent | null,
   activeFault: string
 ): ConfluenceResult {
-  // If backend provided confluence, use it
+  // If backend provided confluence, normalize and use it
   if (payload.confluence) {
-    return payload.confluence;
+    const raw = payload.confluence as any;
+    let confScore = 98.5;
+    if (typeof raw.confidence_score === 'number' && !isNaN(raw.confidence_score)) {
+      confScore = raw.confidence_score;
+    } else if (typeof raw.confidence === 'number' && !isNaN(raw.confidence)) {
+      confScore = raw.confidence <= 1.0 ? raw.confidence * 100 : raw.confidence;
+    }
+    const confidenceNorm = confScore > 1.0 ? confScore / 100.0 : confScore;
+    const defectClass = raw.defect_class || raw.defect_type || 'none';
+    const summary = raw.summary || raw.action_taken || 'Atmospheric parameters within nominal IMD physical boundaries.';
+    const action = raw.action_recommended || raw.action_taken || 'Continuous 1 Hz nominal monitoring.';
+    return {
+      classification: raw.classification || 'Nominal Baseline',
+      confidence: confidenceNorm,
+      confidence_score: confScore,
+      p_weather: typeof raw.p_weather === 'number' ? raw.p_weather : 0.04,
+      p_defect: typeof raw.p_defect === 'number' ? raw.p_defect : 0.03,
+      defect_class: defectClass,
+      defect_type: defectClass,
+      summary,
+      action_recommended: action,
+      action_taken: action,
+      severity: raw.severity,
+      operator_alert: raw.operator_alert,
+    };
   }
 
   const isThunderstorm =

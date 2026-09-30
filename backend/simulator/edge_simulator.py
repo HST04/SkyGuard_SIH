@@ -19,11 +19,11 @@ class EdgeTelemetrySimulator:
         self.running = False
         self._task: Optional[asyncio.Task] = None
 
-        # Base atmospheric state for AGRA-01
+        # Base atmospheric state for AGRA-01 (aligned with regional profile and scaler baseline)
         self.sim_time_sec = 0
-        self.base_temp = 32.5
-        self.base_humidity = 58.0
-        self.base_pressure = 1005.2
+        self.base_temp = 30.0
+        self.base_humidity = 62.5
+        self.base_pressure = 1005.0
         self.base_wind = 3.2
 
         # 5-minute Pitch Script state
@@ -113,6 +113,11 @@ class EdgeTelemetrySimulator:
         """Main 1 Hz simulation tick."""
         while self.running:
             try:
+                # If external script is posting telemetry, pause internal simulation ticks
+                if store.is_external_telemetry_active(timeout_sec=4.0):
+                    await asyncio.sleep(settings.SAMPLING_INTERVAL_SEC)
+                    continue
+
                 self.sim_time_sec += 1
                 self.sequence += 1
                 
@@ -197,6 +202,12 @@ class EdgeTelemetrySimulator:
 
         # Sanitize reasonable limits for raw calculations
         td = calculate_dew_point(temp, rh)
+        imd_passed = bool(
+            -10.0 <= temp <= 60.0
+            and 0.0 <= rh <= 100.0
+            and 850.0 <= press <= 1080.0
+            and td <= temp + 1.0
+        )
 
         return TelemetryPayload(
             station_id=self.station_id,
@@ -210,7 +221,8 @@ class EdgeTelemetrySimulator:
             solar_radiation_wm2=round(solar, 1),
             sequence=self.sequence,
             source="edge-simulator",
-            drop_flag=0
+            drop_flag=0,
+            imd_passed=imd_passed
         )
 
 simulator = EdgeTelemetrySimulator()

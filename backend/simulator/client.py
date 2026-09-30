@@ -143,24 +143,28 @@ class EdgeIMDBoundaryChecker:
             dt_press = abs(p - previous["pressure_hpa"])
             dt_rh = abs(rh - previous["humidity_pct"])
 
-            if dt_temp > cls.MAX_TEMP_STEP_PER_SEC:
-                return {
-                    "rule": "IMD_TEMP_RATE_OF_CHANGE_EXCEEDED",
-                    "culprit": "temperature_c",
-                    "message": f"Thermal rate {dt_temp:.2f}°C/s exceeds {cls.MAX_TEMP_STEP_PER_SEC}°C/s"
-                }
-            if dt_press > cls.MAX_PRESS_STEP_PER_SEC:
-                return {
-                    "rule": "IMD_PRESSURE_BURST_EXCEEDED",
-                    "culprit": "pressure_hpa",
-                    "message": f"Pressure jump {dt_press:.2f} hPa/s exceeds {cls.MAX_PRESS_STEP_PER_SEC} hPa/s"
-                }
-            if dt_rh > cls.MAX_RH_STEP_PER_SEC:
-                return {
-                    "rule": "IMD_HUMIDITY_SPIKE_EXCEEDED",
-                    "culprit": "humidity_pct",
-                    "message": f"Humidity rate {dt_rh:.1f}%/s exceeds {cls.MAX_RH_STEP_PER_SEC}%/s"
-                }
+            # Severe squall / storm front check: coupled thermodynamic pressure plunge and RH surge
+            is_squall = (p - previous["pressure_hpa"] <= -3.0 and rh - previous["humidity_pct"] >= 10.0)
+
+            if not is_squall:
+                if dt_temp > cls.MAX_TEMP_STEP_PER_SEC:
+                    return {
+                        "rule": "IMD_TEMP_RATE_OF_CHANGE_EXCEEDED",
+                        "culprit": "temperature_c",
+                        "message": f"Thermal rate {dt_temp:.2f}°C/s exceeds {cls.MAX_TEMP_STEP_PER_SEC}°C/s"
+                    }
+                if dt_press > cls.MAX_PRESS_STEP_PER_SEC:
+                    return {
+                        "rule": "IMD_PRESSURE_BURST_EXCEEDED",
+                        "culprit": "pressure_hpa",
+                        "message": f"Pressure jump {dt_press:.2f} hPa/s exceeds {cls.MAX_PRESS_STEP_PER_SEC} hPa/s"
+                    }
+                if dt_rh > cls.MAX_RH_STEP_PER_SEC:
+                    return {
+                        "rule": "IMD_HUMIDITY_SPIKE_EXCEEDED",
+                        "culprit": "humidity_pct",
+                        "message": f"Humidity rate {dt_rh:.1f}%/s exceeds {cls.MAX_RH_STEP_PER_SEC}%/s"
+                    }
 
         # 4. Sensor flatline / stuck sensor check
         if recent_history and len(recent_history) >= 8:
@@ -186,19 +190,23 @@ def make_packet(sequence: int, station_id: str, elapsed: float, fault: str) -> d
     """Generates 1 Hz telemetry reading with physical diurnal baseline and chaos injections."""
     # 600-second diurnal cycle for demonstration
     cycle = math.sin((2 * math.pi * (elapsed % 600.0)) / 600.0)
-    temperature = 32.5 + cycle * 4.0 + random.uniform(-0.15, 0.15)
-    humidity = 58.0 - cycle * 12.0 + random.uniform(-0.4, 0.4)
-    pressure = 1005.2 + math.cos((4 * math.pi * (elapsed % 600.0)) / 600.0) * 1.5
-    wind = max(0.5, 3.2 + random.uniform(-0.3, 0.5))
+    temperature = 30.0 + cycle * 4.2 + random.uniform(-0.03, 0.03)
+    humidity = 62.5 - cycle * 12.0 + random.uniform(-0.05, 0.05)
+    pressure = 1005.0 + math.cos((4 * math.pi * (elapsed % 600.0)) / 600.0) * 1.5
+    wind = max(0.5, 3.2 + random.uniform(-0.05, 0.05))
     wind_dir = (180.0 + math.sin(elapsed / 20.0) * 45.0) % 360.0
-    solar = max(0.0, 500.0 + cycle * 350.0 + random.uniform(-10.0, 10.0))
+    solar = max(0.0, 270.0 + cycle * 250.0 + random.uniform(-2.0, 2.0))
 
     # Apply Chaos Injections
     if fault == "heat_spike":
+        # Atmospheric thermal spike / heat surge (+8.0°C with solar radiation boost)
         temperature += 8.0
+        solar = min(1000.0, solar + 180.0)
     elif fault == "humidity_drift":
+        # Capacitive drift: subtle +15% humidity bias (stays < 100% so static IMD rules pass)
         humidity = min(96.0, humidity + 15.0)
     elif fault == "storm":
+        # Severe thunderstorm squall: coupled thermodynamics
         pressure -= 11.0
         humidity = 94.0
         temperature -= 8.0
@@ -207,6 +215,12 @@ def make_packet(sequence: int, station_id: str, elapsed: float, fault: str) -> d
         humidity = 84.2
 
     dew_point = calculate_dew_point(temperature, humidity)
+    imd_passed = bool(
+        -10.0 <= temperature <= 60.0
+        and 0.0 <= humidity <= 100.0
+        and 850.0 <= pressure <= 1080.0
+        and dew_point <= temperature + 1.0
+    )
 
     return {
         "station_id": station_id,
@@ -221,28 +235,33 @@ def make_packet(sequence: int, station_id: str, elapsed: float, fault: str) -> d
         "sequence": sequence,
         "source": "laptop-1-mqtt",
         "drop_flag": 0,
+        "imd_passed": imd_passed,
     }
 
 
 def make_incident_burst(
     trigger_packet: dict,
     context_window: List[dict],
-    trigger_reason: str,
-    fault_mode: str,
-    culprit_sensor: str = "humidity_pct"
+    trigger_reason: str = "IMD_LOCAL_PHYSICS_ALERT",
+    fault_mode: Optional[str] = None,
+    culprit_sensor: Optional[str] = None,
 ) -> dict:
     """Builds an MQTT Incident Context Burst payload."""
-    return {
+    burst = {
         "station_id": trigger_packet.get("station_id", "AGRA-01"),
         "incident_id": f"inc_{int(time.time())}_{trigger_packet.get('sequence', 0)}",
         "triggered_at": datetime.now(timezone.utc).isoformat(),
         "trigger_reason": trigger_reason,
-        "fault_mode": fault_mode,
-        "culprit_sensor": culprit_sensor,
+        "imd_passed": trigger_packet.get("imd_passed", True),
         "trigger_packet": trigger_packet,
         "context_window": context_window,
-        "bandwidth_saved_pct": 91.5
+        "bandwidth_saved_pct": 91.5,
     }
+    if fault_mode is not None:
+        burst["fault_mode"] = fault_mode
+    if culprit_sensor is not None:
+        burst["culprit_sensor"] = culprit_sensor
+    return burst
 
 
 def parse_args() -> argparse.Namespace:
@@ -413,8 +432,6 @@ def main() -> int:
                         trigger_packet=packet,
                         context_window=recent_12,
                         trigger_reason=trigger_reason,
-                        fault_mode=state.mode,
-                        culprit_sensor=culprit
                     )
                     client.publish(args.burst_topic, json.dumps(burst_payload), qos=1)
 

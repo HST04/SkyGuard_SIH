@@ -107,15 +107,13 @@ export function WeatherStation3D({ isExpanded, onToggleExpand }: WeatherStation3
 
       {/* Bottom Center Sensor Quick-Target Buttons */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 glass-panel px-3 py-1.5 rounded-xl border border-white/10 shadow-glass">
-        <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">
-          Focus:
+        <span className="text-[10px] font-mono text-cyan-400 font-semibold uppercase tracking-wider mr-1 hidden sm:inline">
+          Inspect Sensor:
         </span>
         {[
-          { id: 'temperature', label: 'Temp' },
-          { id: 'humidity', label: 'Humidity' },
-          { id: 'pressure', label: 'Barometer' },
-          { id: 'wind', label: 'Wind' },
-          { id: 'solar', label: 'Solar' },
+          { id: 'temperature', label: 'Temp (T)' },
+          { id: 'humidity', label: 'Humidity (RH)' },
+          { id: 'pressure', label: 'Barometer (P)' },
         ].map((sensor) => {
           const isTargeted = selectedSensor === sensor.id;
           const isCulprit = openAnomalies.some((a) => a.culprit_sensors.includes(sensor.id));

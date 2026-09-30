@@ -116,17 +116,16 @@ export default function DashboardPage() {
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden relative min-h-0 bg-[#080c14]">
-      {/* 3D Digital Twin Canvas — Default ~70% width, Expandable to 100% */}
+      {/* 3D Digital Twin Canvas — Flexible width, Expandable to 100% */}
       <div
-        className={`relative border-b lg:border-b-0 border-white/10 flex flex-col flex-1 self-stretch min-h-0 transition-all duration-300 ease-in-out ${
-          isExpanded ? 'w-full lg:w-full' : 'w-full lg:w-[66%] xl:w-[70%] lg:border-r'
+        className={`relative border-b lg:border-b-0 border-white/10 flex flex-col flex-1 self-stretch min-h-0 h-full transition-all duration-300 ease-in-out ${
+          isExpanded ? 'w-full lg:w-full' : 'w-full lg:flex-1 lg:border-r'
         }`}
-        style={{ height: 'calc(100vh - 4rem)', minHeight: 'calc(100vh - 4rem)' }}
       >
         {/* Quick Presenter Action Bar — Centered at Top with Terminal Key Shortcuts */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 hidden md:flex items-center gap-1.5 glass-panel px-3 py-1.5 rounded-xl border border-white/10 shadow-glass">
           <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-semibold mr-1">
-            Chaos Hotkeys:
+            Quick Scenarios:
           </span>
 
           {/* Key 3: Thunderstorm Squall Line */}
@@ -249,9 +248,9 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Standard Split Layout 4-Tab Panel Stack (~30% width) */}
+      {/* Standard Split Layout 4-Tab Panel Stack (420px - 460px width) */}
       {!isExpanded && (
-        <div className="w-full lg:w-[34%] xl:w-[30%] h-[55vh] lg:h-full min-h-0 flex flex-col bg-[#080c14]/95 border-t lg:border-t-0">
+        <div className="w-full lg:w-[400px] xl:w-[450px] h-[50vh] lg:h-full min-h-0 flex flex-col bg-[#080c14]/95 border-t lg:border-t-0 flex-shrink-0">
           {/* 4-Tab Switcher Header */}
           <div className="p-3 border-b border-white/10 bg-black/40">
             <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-slate-900/80 border border-white/10">

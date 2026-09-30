@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import { Activity, Zap, AlertTriangle, ShieldCheck } from 'lucide-react';
 
-const RECONSTRUCTION_THRESHOLD = 0.042;
+const RECONSTRUCTION_THRESHOLD = 0.095;
 
 export function LiveMLPipelinePanel() {
   const { telemetryHistory, latestTelemetry, stationStatus, activeAnomaly } = useTelemetryStore();
@@ -53,7 +53,7 @@ export function LiveMLPipelinePanel() {
         <div className="flex items-center gap-2">
           <Activity className={`w-4 h-4 ${isAnomaly ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`} />
           <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
-            Live AI Error Meter (1D-CNN)
+            AI Pattern Health (1D-CNN)
           </h3>
         </div>
 
@@ -61,22 +61,22 @@ export function LiveMLPipelinePanel() {
         {isAnomaly ? (
           <span className="flex items-center gap-1.5 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/50 shadow-glow-rose animate-pulse">
             <AlertTriangle className="w-3 h-3 text-rose-400" />
-            AI ALERT: DRIFT DETECTED
+            AI ALERT: PATTERN DEVIATION
           </span>
         ) : (
           <span className="flex items-center gap-1.5 text-[10px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
             <ShieldCheck className="w-3 h-3 text-emerald-400" />
-            AI STATUS: NOMINAL
+            AI STATUS: HEALTHY
           </span>
         )}
       </div>
 
       {/* Key Metrics Strip: Current Error Number & Inference Speed */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-        {/* Metric 1: Current Reconstruction MSE */}
+        {/* Metric 1: Pattern Deviation Score */}
         <div className="p-2.5 rounded-xl bg-slate-900/60 border border-white/5 flex flex-col justify-between">
           <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
-            Reconstruction MSE
+            Pattern Deviation
           </div>
           <div className="flex items-baseline gap-1.5 mt-0.5">
             <span
@@ -87,16 +87,16 @@ export function LiveMLPipelinePanel() {
               {currentError.toFixed(4)}
             </span>
             <span className="text-[10px] font-mono text-slate-500">
-              / {RECONSTRUCTION_THRESHOLD.toFixed(3)}
+              / {RECONSTRUCTION_THRESHOLD.toFixed(3)} limit
             </span>
           </div>
         </div>
 
-        {/* Metric 2: AI Inference Speed */}
+        {/* Metric 2: AI Verification Speed */}
         <div className="p-2.5 rounded-xl bg-slate-900/60 border border-white/5 flex flex-col justify-between">
           <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1">
             <Zap className="w-3 h-3 text-amber-400" />
-            Inference Speed
+            Verification Latency
           </div>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-lg font-mono font-bold text-cyan-300">
@@ -109,13 +109,13 @@ export function LiveMLPipelinePanel() {
         {/* Metric 3: Model Architecture Info */}
         <div className="hidden sm:flex p-2.5 rounded-xl bg-slate-900/60 border border-white/5 flex-col justify-between">
           <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
-            Architecture
+            Edge AI Model
           </div>
           <div className="text-[11px] font-mono text-slate-300 font-semibold truncate mt-0.5">
-            1D-CNN Autoencoder
+            1D-CNN Temporal
           </div>
           <div className="text-[9px] font-mono text-slate-500">
-            Latent Dim: 8 • ONNX Runtime
+            12s Window • CPU ONNX
           </div>
         </div>
       </div>

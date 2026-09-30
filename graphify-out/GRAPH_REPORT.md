@@ -1,26 +1,26 @@
-# Graph Report - SkyGuard_SIH  (2026-09-29)
+# Graph Report - SkyGuard_SIH  (2026-09-30)
 
 ## Corpus Check
-- 70 files · ~192,961 words
+- 91 files · ~251,373 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 19 file(s) not represented in the graph (top: .pptx 3, (none) 2, .csv 2)
+- Unclassified: 25 file(s) not represented in the graph (top: .pkl 4, .pptx 3, (none) 2)
 
 ## Summary
-- 980 nodes · 1865 edges · 47 communities (42 shown, 5 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 82 edges (avg confidence: 0.94)
+- 1545 nodes · 2441 edges · 99 communities (90 shown, 9 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 80 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `269970c7`
+- Built from commit: `38f0b579`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - useTelemetryStore
-- test_mqtt_stage6.py
-- test_qa_backend_math_edge_cases.py
-- anyio
-- imputation_engine.py
+- TestChaosModesValidationAndInconsistencies
+- db.py
+- Detailed Minute-by-Minute Demo Script
+- TestImputationThermodynamicEdgeCases
 - InMemoryStore
 - TelemetryPayload
 - ConfluenceResult
@@ -28,101 +28,153 @@
 - compilerOptions
 - 📖 SkyGuard AI — Beginner's Step-by-Step Guide (Zero Jargon)
 - test_qa_edge_telemetry_stress.py
-- simulator.py
-- anomalies.py
+- store.py
+- get_anomaly
 - MQTTSubscriber
 - main.py
 - End-to-End ML Strategy: Split-Edge/Cloud Anomaly Detection & Telemetry Quality Assurance
 - EdgeTelemetrySimulator
 - SkyGuard AI: Split-Edge/Cloud Anomaly Detection Architecture
-- SSEBroadcastManager
+- anyio
 - 4. Member Task Details
 - 🎬 SkyGuard AI — 3-Minute Prototype Video Submission Master Guide
 - next.config.mjs
 - next-env.d.ts
 - Product Requirements Document — SkyGuard AI
 - CircularRingBuffer
-- TestConfluenceEngineEdgeCases
+- brandkit/SKILL.md
 - package.json
 - 🌟 Key Architecture & Capabilities
-- client.py
+- main
 - SkyGuard AI MVP: Minimum User Flows & Operational Journeys
-- test_qa_ml_integration.py
+- synthetic_artifacts_dir
 - Harsh: maintenance + imputation, fitted into main
 - TestMalformedPayloadsAndTypeMismatch
 - rules/graphify.md
 - MultivariateAnomalyDetector
 - stream_telemetry
-- test_sensor_health.py
+- CORE DIRECTIVE: IMAGE-FIRST WEBSITE DESIGN TO CODE
 - make_packet
 - ConfluenceEngine
-- MultiScaleAnalyzer
-- TestShapeCompatibilityAndFailureModes
-- AnomalyEvaluation
-- SKILL.md
 - AnomalyEvent
-- .analyze_window
+- make_telemetry_window
+- TestSyntheticArtifactsHotPlugging
+- SKILL.md
+- test_qa_backend_math_edge_cases.py
+- CORE DIRECTIVE: PREMIUM MOBILE APP IMAGE DIRECTION
+- High-Agency Frontend Skill
+- run_demo.py
+- client.py
+- Appendix B - Canonical Sources (read these before reinventing)
+- Design Audit
+- test_e2e_pipeline.py
+- Analysis & Synthesis Instructions
+- Agent Skill: Principal UI/UX Architect & Motion Choreographer (Awwwards-Tier)
+- SKILL: Industrial Brutalism & Tactical Telemetry UI
+- Design System: Taste Standard
+- CORE DIRECTIVE: AWWWARDS-LEVEL IMAGE ART DIRECTION
+- 2. THE COMBINATORIAL VARIATION ENGINE
+- 4. DESIGN ENGINEERING DIRECTIVES (Bias Correction)
+- 10. REFERENCE VOCABULARY (Pattern Names the Agent Should Know)
+- tasteskill: Anti-Slop Frontend Skill
+- CORE DIRECTIVE: AWWWARDS-LEVEL DESIGN ENGINEERING
+- 22. STYLE VARIATION ENGINE
+- Protocol: Premium Utilitarian Minimalism UI Architect
+- 11. COMPONENT EXECUTION GUIDELINES
+- 18. EXTRA CREATIVITY & IMPLEMENTATION EDGE
+- 9. AI TELLS (Forbidden Patterns)
+- 12. THE COMBINATORIAL VARIATION ENGINE
+- 8. ANTI-AI-SLOP RULES
+- 11. REDESIGN PROTOCOL
+- 3. DEFAULT ARCHITECTURE & CONVENTIONS
+- 6. PERFORMANCE & ACCESSIBILITY GUARDRAILS
+- Full-Output Enforcement
+- 33. CATEGORY-SPECIFIC BIAS
+- 13. COLOR & MATERIAL RULES
+- 4. HERO MINIMALISM RULES
+- TestCorruptedArtifactsHandling
+- 29. ANTI-AI-SLOP RULES
+- 5. IMAGE COUNT & PAGE SLICING
+- 0. BRIEF INFERENCE (Read the Room Before Anything Else)
+- 12. THE BLOCK LIBRARY (Contract - Implementations Land Here Iteratively)
+- 5. CONTEXT-AWARE PROACTIVITY
+- 8. DARK MODE PROTOCOL
+- 21. MOBILE ANTI-AI-TELLS RULE
+- 7. DIAL DEFINITIONS (Technical Reference)
+- 33. DEFAULT SECTION PACKS
+- 14. HERO MINIMALISM RULES
+- 37. EXAMPLE INTERPRETATIONS
+- 2. PLATFORM MODE RULE
+- 37. EXAMPLE INTERPRETATIONS
+- 15. DEFAULT SITE PACKS
+- 20. EXAMPLE INTERPRETATIONS
+- MultiScaleAnalyzer
+- imagegen-frontend-web/SKILL.md
+- TestMissingArtifactsHandling
+- conftest.py
+- ingest_telemetry_packet
+- AnomalyEvaluation
 
 ## God Nodes (most connected - your core abstractions)
-1. `TelemetryPayload` - 54 edges
+1. `TelemetryPayload` - 56 edges
 2. `useTelemetryStore` - 42 edges
-3. `make_packet()` - 33 edges
-4. `ConfluenceEngine` - 28 edges
-5. `InMemoryStore` - 26 edges
-6. `MultivariateAnomalyDetector` - 26 edges
-7. `AnomalyEvent` - 24 edges
-8. `DriftTracker` - 22 edges
-9. `react` - 20 edges
-10. `MultiScaleAnalyzer` - 19 edges
+3. `CORE DIRECTIVE: IMAGE-FIRST WEBSITE DESIGN TO CODE` - 39 edges
+4. `CORE DIRECTIVE: PREMIUM MOBILE APP IMAGE DIRECTION` - 39 edges
+5. `make_packet()` - 33 edges
+6. `ConfluenceEngine` - 29 edges
+7. `InMemoryStore` - 28 edges
+8. `MultivariateAnomalyDetector` - 27 edges
+9. `AnomalyEvent` - 24 edges
+10. `DriftTracker` - 22 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Tasks:` --references--> `init_db()`  [INFERRED]
   TASKS.md → backend/data/db.py
-- `3. Team Coordination & Technical Handoffs` --references--> `main()`  [INFERRED]
-  TASKS.md → backend/simulator/client.py
-- `🔄 Technical Handoffs:` --references--> `main()`  [INFERRED]
-  tasks_no_jargon.md → backend/simulator/client.py
-- `Tasks:` --references--> `main()`  [INFERRED]
-  TASKS.md → backend/simulator/client.py
 - `Tasks:` --references--> `MaintenanceResult`  [INFERRED]
+  TASKS.md → frontend/src/lib/types.ts
+- `Tasks:` --references--> `MaintenanceResult`  [INFERRED]
+  TASKS.md → frontend/src/lib/types.ts
+- `Tasks:` --references--> `ImputationResult`  [INFERRED]
+  TASKS.md → frontend/src/lib/types.ts
+- `Tasks:` --references--> `ImputationResult`  [INFERRED]
   TASKS.md → frontend/src/lib/types.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (47 total, 5 thin omitted)
+## Communities (99 total, 9 thin omitted)
 
 ### Community 0 - "useTelemetryStore"
 Cohesion: 0.07
 Nodes (62): EdgeSimulatorPage(), frontend_src_app_globals, metadata, RootLayout(), DashboardPage(), TimeSeriesChart(), Header(), AnomalyCard() (+54 more)
 
-### Community 1 - "test_mqtt_stage6.py"
+### Community 1 - "TestChaosModesValidationAndInconsistencies"
 Cohesion: 0.16
-Nodes (13): calculate_dew_point(), EdgeIMDBoundaryChecker, Calculates dew point using Magnus-Tetens approximation., Layer 1.1 Local Deterministic Bounds & Rate-of-Change Checker Evaluates IMD…, Unit & Integration Tests for Laptop 1 Edge Weather Station Transmitter Stage 6…, Verify standard edge telemetry packet passes through backend ingestion cleanly., Verify all 5 transmitter modes generate physically consistent baseline and…, Verify in-memory circular ring buffer maintains 120-item capacity and retrieves… (+5 more)
+Nodes (10): EdgeIMDBoundaryChecker, Layer 1.1 Local Deterministic Bounds & Rate-of-Change Checker Evaluates IMD…, Verify edge-side Layer 1.1 IMD boundary and step checks flag physical…, test_edge_imd_boundary_checker(), Rigorous tests evaluating the 5 chaos modes in client.py and extended simulator…, Verify all 5 chaos modes generate well-formed TelemetryPayload packets., HARSH ANALYSIS - Mode 1 Heat Spike: Tick 1 jumps +8°C instantaneously ->…, HARSH ANALYSIS - Mode 2 Capacitive Drift: In client.py, humidity jumps +15% in… (+2 more)
 
-### Community 2 - "test_qa_backend_math_edge_cases.py"
+### Community 2 - "db.py"
+Cohesion: 0.07
+Nodes (58): AsyncSession, AnomalyIncident, Base, format_db_url(), get_recent_telemetry(), get_session(), init_db(), insert_anomaly() (+50 more)
+
+### Community 3 - "Detailed Minute-by-Minute Demo Script"
+Cohesion: 0.12
+Nodes (15): Detailed Minute-by-Minute Demo Script, Live Hotkey Reference Table, Phase 1: Introduction & The Core Problem (0:00 – 0:45), Phase 2: Nominal Diurnal Baseline & Edge Verification (0:45 – 1:30), Phase 3: The True-Negative Severe Thunderstorm Squall (1:30 – 2:30), Phase 4: Capacitive Humidity Drift, SHAP Attribution & Data Repair (2:30 – 3:20), Phase 5: Frozen Sensor, Predictive Maintenance, & Conclusion (3:20 – 4:00), Pre-Recording Checklist (+7 more)
+
+### Community 4 - "TestImputationThermodynamicEdgeCases"
 Cohesion: 0.06
-Nodes (72): asyncio, AsyncSession, AnomalyIncident, Base, format_db_url(), get_recent_telemetry(), get_session(), init_db() (+64 more)
-
-### Community 3 - "anyio"
-Cohesion: 0.13
-Nodes (11): anyio, CRITICAL VULNERABILITY TEST: Evaluate what happens when NaN or Inf are injected…, Rigorous tests evaluating the 5 chaos modes in client.py and extended simulator…, Verify all 5 chaos modes generate well-formed TelemetryPayload packets., HARSH ANALYSIS - Mode 1 Heat Spike: Tick 1 jumps +8°C instantaneously ->…, HARSH ANALYSIS - Mode 2 Capacitive Drift: In client.py, humidity jumps +15% in…, HARSH ANALYSIS - Mode 3 Severe Thunderstorm: In client.py, storm applies -11…, CRITICAL PROTOCOL DISCREPANCY - Mode 4 Frozen Sensor: In client.py, humidity… (+3 more)
-
-### Community 4 - "imputation_engine.py"
-Cohesion: 0.06
-Nodes (31): dew_point(), find_column(), _fit_line(), ImputationEngine, _ok(), Imputation: estimates what a faulty sensor should read, using the sensors that…, Fit RH-vs-T and pressure stats from the normal-weather CSV., rh_from_dewpoint() (+23 more)
+Nodes (19): fixture, Rigorous verification of Layer 2.3 ConfluenceEngine and confidence score…, Verify confidence formula: conf_pct = max(P_D, P_W) * (1.0 - (1.0 - |P_D -…, Test negative, super-unity, and NaN probability handling., Verify exact quadrant boundaries for 70% and 30% thresholds: - Weather Event:…, Document critical bug: evaluate_window uses getattr(curr, key) directly without…, Test resilience when an object has an attribute explicitly set to None., Rigorous tests for Magnus-Tetens formulas and ImputationEngine. (+11 more)
 
 ### Community 5 - "InMemoryStore"
 Cohesion: 0.06
 Nodes (17): InMemoryStore, Any, Non-blocking enqueue for database persistence., Adds telemetry to in-memory history and enqueues async DB write without…, Adds anomaly to in-memory state and enqueues async DB write., Enqueues a predictive maintenance record for persistence., Blocks until pending persistence tasks have finished (useful for testing)., Clears in-memory history and active anomalies (useful for testing). (+9 more)
 
 ### Community 6 - "TelemetryPayload"
-Cohesion: 0.23
-Nodes (13): TelemetryPayload, calculate_dew_point(), IMDPhysicsRuleEngine, Stage 1: Deterministic Climatological & Physical Bounds Checker. Strictly based…, Evaluates current reading against IMD physics bounds and previous step. Returns…, Calculates dew point using the standard Magnus-Tetens approximation formula., Runs every telemetry source through one ordered processing pipeline., TelemetryIngestionService (+5 more)
+Cohesion: 0.26
+Nodes (12): TelemetryPayload, calculate_dew_point(), IMDPhysicsRuleEngine, Stage 1: Deterministic Climatological & Physical Bounds Checker. Strictly based…, Evaluates whether an individual telemetry packet satisfies local IMD physical…, Evaluates current reading against IMD physics bounds and previous step. Returns…, Calculates dew point using the standard Magnus-Tetens approximation formula., test_anomaly_detector_drift() (+4 more)
 
 ### Community 7 - "ConfluenceResult"
-Cohesion: 0.15
-Nodes (8): ConfluenceResult, Any, Structured outcome of the Dual-Model Classification Confluence Decision Matrix…, Evaluates a window of telemetry records. If trained models are present, runs…, Attempts to load Model A (Weather) and Model B (Defect) from artifacts. If…, Calculates mathematical confidence score (0-100%) according to Layer 2.3:…, Evaluates the deterministic Confluence Decision Matrix (PRD Section 5.5 /…, dict
+Cohesion: 0.16
+Nodes (7): ConfluenceResult, Any, Structured outcome of the Dual-Model Classification Confluence Decision Matrix…, Evaluates a window of telemetry records. If trained models are present, runs…, Attempts to load Model A (Weather) and Model B (Defect) from artifacts or root.…, Calculates mathematical confidence score (0-100%). Formula: max(P_d, P_w) *…, dict
 
 ### Community 8 - "DriftTracker"
 Cohesion: 0.09
@@ -137,16 +189,16 @@ Cohesion: 0.04
 Nodes (47): 🗺️ How the System Works, 🎬 How to Record:, 📖 SkyGuard AI — Beginner's Step-by-Step Guide (Zero Jargon), 🟢 STAGE 1: Setting Up the Cloud Notebook (The Database), 🟢 STAGE 2: Setting Up the Cloud Server (The Azure Brain), 🟢 STAGE 3: Creating the Weather Materials (The Teacher Data), 🟢 STAGE 4: Training the AI Brain in Google Colab (Free GPU), 🟢 STAGE 5: Building the Cloud Decision Engine (The Judge & Doctor) (+39 more)
 
 ### Community 11 - "test_qa_edge_telemetry_stress.py"
-Cohesion: 0.23
-Nodes (13): Settings, Harsh, Rigorous QA Stress Test Suite: Edge Transmitter, Chaos Modes, MQTT/REST…, BaseSettings, fastapi_responses, json, logging, math, numpy (+5 more)
+Cohesion: 0.15
+Nodes (21): asyncio, Settings, Harsh, Rigorous QA Stress Test Suite: Edge Transmitter, Chaos Modes, MQTT/REST…, Harsh, Rigorous ML Pipeline & Yukti Integration QA Test Suite. Target Services…, BaseSettings, fastapi_responses, joblib, json (+13 more)
 
-### Community 12 - "simulator.py"
-Cohesion: 0.19
-Nodes (13): FaultInjectionRequest, get_simulator_status(), inject_fault(), get, post, Injects a physical sensor fault or environmental transient into the virtual…, Resets simulator to clean nominal weather with zero faults., Launches the 5-Minute Auto-Scenario Pitch Script: - T+0:00 (Baseline): Normal… (+5 more)
+### Community 12 - "store.py"
+Cohesion: 0.11
+Nodes (25): AnomalyUpdateRequest, FaultInjectionRequest, OperatorFeedback, PitchScriptStatus, StationOverview, post, Operator action: acknowledge, resolve, or mark an anomaly., Operator Active Learning Feedback loop. Flags false alarms or confirms faults… (+17 more)
 
-### Community 13 - "anomalies.py"
-Cohesion: 0.16
-Nodes (15): AnomalyUpdateRequest, OperatorFeedback, StationOverview, get_anomaly(), list_anomalies(), get, post, Lists detected anomalies, sorted by most recent. (+7 more)
+### Community 13 - "get_anomaly"
+Cohesion: 0.40
+Nodes (5): get_anomaly(), list_anomalies(), get, Lists detected anomalies, sorted by most recent., Get detailed anomaly with SHAP feature attribution.
 
 ### Community 14 - "MQTTSubscriber"
 Cohesion: 0.20
@@ -160,17 +212,13 @@ Nodes (15): health_check(), lifespan(), get, root(), ImputationAcceptRequest, ac
 Cohesion: 0.06
 Nodes (31): 10.1 Model Architecture & Formulation, 10. Imputation & Correction Module (3.5), 11. Evaluation Metrics & Benchmark Targets, 12. Configuration Reference (`config/ml_pipeline.yaml`), 1. Executive Summary & Core Principles, 2. End-to-End ML Pipeline Architecture, 3.1 1.1 IMD Plausibility Check (Logical Filter), 3.2 1.2 Quantized PyOD (Lightweight Outlier Detection) (+23 more)
 
-### Community 17 - "EdgeTelemetrySimulator"
-Cohesion: 0.24
-Nodes (3): PitchScriptStatus, EdgeTelemetrySimulator, Main 1 Hz simulation tick.
-
 ### Community 18 - "SkyGuard AI: Split-Edge/Cloud Anomaly Detection Architecture"
 Cohesion: 0.07
-Nodes (26): 1. Executive Summary & Design Principles, 1. Periodic Nominal Heartbeat, 2. Flagged Incident Packet (Context Burst), 2. High-Level Architecture Diagram, 3. Detailed Layer Explanation & Responsibilities, 4. End-to-End Data Pipeline Flow, 5.1 Layer 1.1: IMD Plausibility Check (Logical Filter), 5.2 Layer 1.2: Quantized PyOD / TFLite Micro (+18 more)
+Nodes (26): 1. Executive Summary & Design Principles, 1. Periodic Nominal Heartbeat, 2. Flagged Incident Packet (Context Burst), 2. High-Level Architecture Diagram, 3. Detailed Layer Explanation & Responsibilities, 4. End-to-End Data Pipeline Flow, 5.1 Layer 1.1: IMD Plausibility Check (Logical Filter), 5.2 Layer 1.2: 1D-CNN Temporal Autoencoder (ONNX / TFLite Micro) (+18 more)
 
-### Community 19 - "SSEBroadcastManager"
-Cohesion: 0.12
-Nodes (11): Any, Broadcasts an SSE message formatted as: event: <event_type> data: <json_string>, SSEBroadcastManager, Rigorous tests evaluating the SSE Broadcast Manager, connection lifecycle,…, Verify subscribing and unsubscribing cleanly tracks client count., Verify broadcasts are dispatched concurrently to all active subscriber queues., Verify when a slow/stalled client queue (maxsize=100) fills up, the oldest…, VULNERABILITY TEST: If non-serializable objects (such as raw Python objects or… (+3 more)
+### Community 19 - "anyio"
+Cohesion: 0.11
+Nodes (14): Any, Broadcasts an SSE message formatted as: event: <event_type> data: <json_string>, SSEBroadcastManager, anyio, HARSH ANALYSIS - Mode 3 Severe Thunderstorm: In client.py, storm applies -11…, Rigorous tests evaluating the SSE Broadcast Manager, connection lifecycle,…, Verify subscribing and unsubscribing cleanly tracks client count., Verify broadcasts are dispatched concurrently to all active subscriber queues. (+6 more)
 
 ### Community 20 - "4. Member Task Details"
 Cohesion: 0.08
@@ -188,9 +236,9 @@ Nodes (17): 1. Executive Summary, 2.1 Current State vs. SkyGuard AI, 2.2 Root Ca
 Cohesion: 0.11
 Nodes (15): CircularRingBuffer, make_incident_burst(), Builds an MQTT Incident Context Burst payload., In-memory circular ring buffer representing a 2-hour sliding window (120…, Returns the past `count` samples preceding the current reading., Verify Incident Burst payload structure contains trigger reading + 12 context…, Verify backend ingestion handles incident burst payloads by unwrapping the…, test_incident_burst_ingestion_compatibility() (+7 more)
 
-### Community 27 - "TestConfluenceEngineEdgeCases"
-Cohesion: 0.07
-Nodes (15): fixture, Zero variance in temperature or humidity must return 0.0 correlation without…, Document flaw: NaN or Inf inside window propagates silently into correlation…, Document flaw: compute_derivatives relies on list indexing window[-1] -…, Verify boundary condition: rho_{T, RH} > 0.0 and abs(dP/dt) < 2.0., Rigorous verification of Layer 2.3 ConfluenceEngine and confidence score…, Verify confidence formula: conf_pct = max(P_D, P_W) * (1.0 - (1.0 - |P_D -…, Test negative, super-unity, and NaN probability handling. (+7 more)
+### Community 27 - "brandkit/SKILL.md"
+Cohesion: 0.05
+Nodes (43): 1. Logo Cover, 1. Monogram + Meaning, 2 × 3 REFERENCE-STYLE LAYOUT, 2. Logo Construction, 2. Product Action, 3. Digital Application, 3. Metaphor Fusion, 4. Brand Essence (+35 more)
 
 ### Community 28 - "package.json"
 Cohesion: 0.05
@@ -200,85 +248,281 @@ Nodes (42): dependencies, clsx, lucide-react, next, react, react-dom, @react-thr
 Cohesion: 0.18
 Nodes (10): 1.0 Edge Device Layer (ESP32 Deployment & Emulation), 1. Start the Backend API (FastAPI), 2.0 Cloud Analytics Layer (Structured Reasoning), 2. Start the Frontend Dashboard (Next.js 14), 3.0 Visualization & Alerting Layer (Operator Dashboard), 3. Optional Two-Laptop / Edge Simulator Demo, 🌟 Key Architecture & Capabilities, 🚀 Quick Start (Local Run) (+2 more)
 
-### Community 30 - "client.py"
-Cohesion: 0.14
-Nodes (17): argparse, Predictive maintenance: tracks slow sensor drift and estimates when a sensor…, FaultState, format_status_badge(), main(), parse_args(), print_banner(), SkyGuard AI — Laptop 1 Edge Weather Station Transmitter (AWS AGRA-01) Assigned… (+9 more)
+### Community 30 - "main"
+Cohesion: 0.18
+Nodes (11): FaultState, format_status_badge(), main(), parse_args(), print_banner(), Non-blocking keyboard read across Windows and Unix., Updates fault state according to terminal keypress., Returns color-coded badge for active mode. (+3 more)
 
 ### Community 31 - "SkyGuard AI MVP: Minimum User Flows & Operational Journeys"
 Cohesion: 0.29
 Nodes (6): 1. Primary Flow: Edge Filtering, Confluence Reasoning, & XAI Diagnostics, 2. Secondary Flow: Predictive Maintenance & Sensor Health (3.4), 3. Tertiary Flow: Imputation & Data Correction (3.5), 4. Live Demonstration Flow: The 5-Minute Pitch Script, Primary Sequence Diagram, SkyGuard AI MVP: Minimum User Flows & Operational Journeys
 
-### Community 32 - "test_qa_ml_integration.py"
-Cohesion: 0.11
-Nodes (19): build_synthetic_autoencoder_onnx(), __init__(), build_synthetic_model_a(), build_synthetic_model_b(), build_synthetic_scaler_json(), fixture, Harsh, Rigorous ML Pipeline & Yukti Integration QA Test Suite. Target Services…, Generates scaler.json matching Yukti's schema from notebook Step 3. (+11 more)
+### Community 32 - "synthetic_artifacts_dir"
+Cohesion: 0.15
+Nodes (12): build_synthetic_autoencoder_onnx(), __init__(), build_synthetic_model_a(), build_synthetic_model_b(), build_synthetic_scaler_json(), fixture, Generates scaler.json matching Yukti's schema from notebook Step 3., Generates Model A (Weather Classifier) returning classes ['nominal', 'squall']. (+4 more)
 
 ### Community 33 - "Harsh: maintenance + imputation, fitted into main"
 Cohesion: 0.40
 Nodes (4): For Mudit, For Shreyansh, Harsh: maintenance + imputation, fitted into main, Settings
 
 ### Community 34 - "TestMalformedPayloadsAndTypeMismatch"
-Cohesion: 0.13
-Nodes (8): Verify numeric strings are coerced while boolean-as-float is audited., Verify unexpected extra fields are safely ignored by TelemetryPayload., Verify MQTT subscriber message handler discards malformed UTF-8, non-JSON, and…, Verify FastAPI REST endpoints strictly reject malformed JSON and out-of-spec…, Rigorous tests evaluating how the ingestion pipeline, schemas, and endpoints…, Verify that omitting mandatory fields raises Pydantic ValidationError., Verify non-numeric strings in numeric fields are rejected with ValidationError., TestMalformedPayloadsAndTypeMismatch
+Cohesion: 0.12
+Nodes (9): Verify numeric strings are coerced while boolean-as-float is audited., Verify unexpected extra fields are safely ignored by TelemetryPayload., CRITICAL VULNERABILITY TEST: Evaluate what happens when NaN or Inf are injected…, Verify MQTT subscriber message handler discards malformed UTF-8, non-JSON, and…, Verify FastAPI REST endpoints strictly reject malformed JSON and out-of-spec…, Rigorous tests evaluating how the ingestion pipeline, schemas, and endpoints…, Verify that omitting mandatory fields raises Pydantic ValidationError., Verify non-numeric strings in numeric fields are rejected with ValidationError. (+1 more)
 
 ### Community 36 - "MultivariateAnomalyDetector"
-Cohesion: 0.17
-Nodes (7): MultivariateAnomalyDetector, Runs 1 Hz inference on the sliding window. Returns: (detected_anomaly_or_none,…, Stage 2 & 5: Multivariate Temporal Anomaly Detection Engine. Evaluates incoming…, Verifies that missing artifacts do not crash the backend and trigger…, DISCREPANCY CHECK: If scaler.json is corrupted or invalid, does…, TestMissingArtifactsHandling, ndarray
+Cohesion: 0.31
+Nodes (4): MultivariateAnomalyDetector, Runs 1 Hz inference on the sliding window. Returns: (detected_anomaly_or_none,…, Stage 2 & 5: Multivariate Temporal Anomaly Detection Engine. Evaluates incoming…, ndarray
 
 ### Community 37 - "stream_telemetry"
 Cohesion: 0.18
 Nodes (10): get_latest_telemetry(), get_station_overview(), get_telemetry_history(), get, Hydration endpoint: gets the most recent telemetry packet., Retrieves recent rolling telemetry history for chart visualization., Summary overview for Station AGRA-01., Server-Sent Events (SSE) live telemetry and anomaly stream at 1 Hz. Directly… (+2 more)
 
-### Community 38 - "test_sensor_health.py"
-Cohesion: 0.43
-Nodes (6): feed(), Harsh: predictive maintenance + imputation. Run: python -m pytest tests -q, Runs packets through a fresh SensorHealthService (no detector)., test_drift_detected_and_imputed(), test_normal_weather_stays_healthy(), test_storm_pauses_maintenance()
+### Community 38 - "CORE DIRECTIVE: IMAGE-FIRST WEBSITE DESIGN TO CODE"
+Cohesion: 0.06
+Nodes (34): 10. IMAGE-FIRST CODEX WEBSITE WORKFLOW, 11. WHEN TO TRIGGER IMAGE GENERATION FIRST, 13. WEBSITE REFERENCE RULE, 15. RESPONSIVE FIRST-VIEW RULE, 16. ANTI-NESTED-BOX RULE, 17. REDUCE MICRO-UI CLUTTER RULE, 18. SECTION IMAGE GENERATION RULE, 19. WEBSITE IMAGE SYSTEM RULE (+26 more)
 
 ### Community 39 - "make_packet"
-Cohesion: 0.16
-Nodes (10): make_packet(), Generates 1 Hz telemetry reading with physical diurnal baseline and chaos…, Rigorous tests evaluating rapid packet bursts (50-100 packets): - Concurrency…, Verify ingesting 100 packets concurrently via asyncio.gather: - Lock serializes…, Verify store._telemetry_history adheres to its bounded deque capacity (1000…, Verify store.get_telemetry_history(limit=12) strictly honors the limit argument., MEMORY LEAK AUDIT TEST: store._anomalies is a standard Python dict with NO…, MEMORY LEAK AUDIT TEST: store._feedback_logs and sensor_health.accepted are… (+2 more)
+Cohesion: 0.10
+Nodes (17): make_packet(), Generates 1 Hz telemetry reading with physical diurnal baseline and chaos…, Verify standard edge telemetry packet passes through backend ingestion cleanly., Verify all 5 transmitter modes generate physically consistent baseline and…, Verify in-memory circular ring buffer maintains 120-item capacity and retrieves…, test_circular_ring_buffer(), test_mqtt_payload_uses_existing_ingestion_pipeline(), test_transmitter_fault_packets() (+9 more)
 
 ### Community 40 - "ConfluenceEngine"
-Cohesion: 0.14
-Nodes (12): ConfluenceEngine, Layer 2.3: Classification Confluence & Confidence Scoring Engine. Reconciles…, Verify deterministic 4-quadrant Confluence Decision Matrix rules., Verify confidence scoring formula., test_confluence_confidence_scoring(), test_confluence_decision_matrix_rules(), Verifies that corrupted model files are caught gracefully and do not break…, Rigorously audits the Confluence Decision Matrix and Confidence formulas. (+4 more)
-
-### Community 41 - "MultiScaleAnalyzer"
 Cohesion: 0.18
-Nodes (10): MultiScaleAnalyzer, Layer 2.1: Multi-Scale Multivariate Physical Analyzer (PRD Section 5.3 /…, Task 1.3: Verify isolated Multi-Scale Multivariate Analyzer functionality., test_multi_scale_analyzer_isolated(), make_telemetry_window(), Helper to generate sliding window of synthetic TelemetryPayload items., CRITICAL BUG DISCOVERY: In confluence_engine.py, self.model_a and self.model_b…, Verifies MultiScaleAnalyzer output vector contract with downstream models. (+2 more)
+Nodes (10): ConfluenceEngine, Layer 2.3: Classification Confluence & Confidence Scoring Engine. Reconciles…, Verify deterministic 4-quadrant Confluence Decision Matrix rules., Verify confidence scoring formula., test_confluence_confidence_scoring(), test_confluence_decision_matrix_rules(), Rigorously audits the Confluence Decision Matrix and Confidence formulas., DISCREPANCY DOCUMENTATION: confluence_engine.py line 79 uses factor 0.18:… (+2 more)
 
-### Community 42 - "TestShapeCompatibilityAndFailureModes"
+### Community 41 - "AnomalyEvent"
+Cohesion: 0.21
+Nodes (7): AnomalyEvent, ShapAttribution, weather_event: pass the confluence engine's answer once it exists. Left as…, SensorHealthService, Runs every telemetry source through one ordered processing pipeline., TelemetryIngestionService, deque
+
+### Community 42 - "make_telemetry_window"
+Cohesion: 0.15
+Nodes (9): make_telemetry_window(), Helper to generate sliding window of synthetic TelemetryPayload items., Harsh tests on ONNX dimension contracts and anomaly_detector error handling., Strict shape test: Yukti's ONNX autoencoder exports with fixed timesteps=12:…, BUG DISCOVERY: When window has 3 to 11 points, norm_matrix[-12:, :] returns…, When window length is 24 (> 12), norm_matrix[-12:, :] takes the last 12 points,…, FEATURE ORDER CONTRACT: Both training notebook and anomaly_detector.py must…, Verify dynamic_axes allows batch sizes 1, 2, and 8 when sequence length is… (+1 more)
+
+### Community 43 - "TestSyntheticArtifactsHotPlugging"
+Cohesion: 0.25
+Nodes (4): Rigorous tests evaluating live hot-plugged ML artifacts matching Yukti's schema., BUG DISCOVERY: scaler.json contains custom baseline means: T=30.5, RH=62.0,…, Verifies that ConfluenceEngine evaluate_window actively calls loaded Model A…, TestSyntheticArtifactsHotPlugging
+
+### Community 45 - "test_qa_backend_math_edge_cases.py"
 Cohesion: 0.17
-Nodes (7): Harsh tests on ONNX dimension contracts and anomaly_detector error handling., Strict shape test: Yukti's ONNX autoencoder exports with fixed timesteps=12:…, BUG DISCOVERY: When window has 3 to 11 points, norm_matrix[-12:, :] returns…, When window length is 24 (> 12), norm_matrix[-12:, :] takes the last 12 points,…, FEATURE ORDER CONTRACT: Both training notebook and anomaly_detector.py must…, Verify dynamic_axes allows batch sizes 1, 2, and 8 when sequence length is…, TestShapeCompatibilityAndFailureModes
+Nodes (13): dew_point(), find_column(), _fit_line(), ImputationEngine, _ok(), Imputation: estimates what a faulty sensor should read, using the sensors that…, Fit RH-vs-T and pressure stats from the normal-weather CSV., rh_from_dewpoint() (+5 more)
 
-### Community 43 - "AnomalyEvaluation"
+### Community 46 - "CORE DIRECTIVE: PREMIUM MOBILE APP IMAGE DIRECTION"
+Cohesion: 0.06
+Nodes (34): 10. DEVICE MOCKUP FRAME RULE, 11. ONBOARDING FLOW RULE, 12. FIRST SCREEN CLEANLINESS RULE, 13. SAFE AREA AND SYSTEM REGION RULE, 14. NAVIGATION RULE, 15. CLEAN LAYOUT RULE, 16. CREATIVE IMAGE DIRECTION RULE, 17. BACKGROUND TEXTURE AND SURFACE RULE (+26 more)
+
+### Community 47 - "High-Agency Frontend Skill"
+Cohesion: 0.06
+Nodes (30): 10. FINAL PRE-FLIGHT CHECK, 1. ACTIVE BASELINE CONFIGURATION, 2. DEFAULT ARCHITECTURE & CONVENTIONS, 3. DESIGN ENGINEERING DIRECTIVES (Bias Correction), 4. CREATIVE PROACTIVITY (Anti-Slop Implementation), 5. PERFORMANCE GUARDRAILS, 6. TECHNICAL REFERENCE (Dial Definitions), 7. AI TELLS (Forbidden Patterns) (+22 more)
+
+### Community 48 - "run_demo.py"
+Cohesion: 0.12
+Nodes (16): atexit, calc_dew_point(), EdgeStationRunner, Reads non-blocking keypress if available on Windows., Magnus-Tetens thermodynamic dew point formula., pathlib, cleanup(), is_port_in_use() (+8 more)
+
+### Community 49 - "client.py"
+Cohesion: 0.09
+Nodes (32): argparse, Predictive maintenance: tracks slow sensor drift and estimates when a sensor…, _epoch(), Sensor health: predictive maintenance + imputation, run once per packet from…, calculate_dew_point(), SkyGuard AI — Laptop 1 Edge Weather Station Transmitter (AWS AGRA-01) Assigned…, Calculates dew point using Magnus-Tetens approximation., Unit & Integration Tests for Laptop 1 Edge Weather Station Transmitter Stage 6… (+24 more)
+
+### Community 50 - "Appendix B - Canonical Sources (read these before reinventing)"
+Cohesion: 0.09
+Nodes (21): APPENDICES - Real Source-Backed Reference Material, Appendix A - Install Commands per Design System, Appendix B - Canonical Sources (read these before reinventing), Appendix C - Apple Liquid Glass: Honest Web Approximation, Apple Liquid Glass (Apple platforms only), Atlassian, Bootstrap, Carbon (+13 more)
+
+### Community 51 - "Design Audit"
+Cohesion: 0.10
+Nodes (19): Code Quality, Color and Surfaces, Component Patterns, Content, Design Audit, Fix Priority, How This Works, Iconography (+11 more)
+
+### Community 52 - "test_e2e_pipeline.py"
+Cohesion: 0.25
+Nodes (7): End-to-End System Integration Test (Hanswarup — TASKS.md Task 1.4) Verifies…, Verify nominal weather packet flow through ingestion, analyzer, confluence,…, Verify FastAPI REST API endpoints using TestClient., test_e2e_fastapi_rest_endpoints(), test_e2e_nominal_weather_pipeline(), fastapi_testclient, pytest
+
+### Community 53 - "Analysis & Synthesis Instructions"
+Cohesion: 0.11
+Nodes (18): 1. Define the Atmosphere, 2. Map the Color Palette, 3. Establish Typography Rules, 4. Define the Hero Section, 5. Describe Component Stylings, 6. Define Layout Principles, 7. Define Responsive Rules, 8. Encode Motion Philosophy (+10 more)
+
+### Community 54 - "Agent Skill: Principal UI/UX Architect & Motion Choreographer (Awwwards-Tier)"
+Cohesion: 0.11
+Nodes (17): 1. Meta Information & Core Directive, 2. THE "ABSOLUTE ZERO" DIRECTIVE (STRICT ANTI-PATTERNS), 3. THE CREATIVE VARIANCE ENGINE, 4. HAPTIC MICRO-AESTHETICS (COMPONENT MASTERY), 5. MOTION CHOREOGRAPHY (FLUID DYNAMICS), 6. PERFORMANCE GUARDRAILS, 7. EXECUTION PROTOCOL, 8. PRE-OUTPUT CHECKLIST (+9 more)
+
+### Community 55 - "SKILL: Industrial Brutalism & Tactical Telemetry UI"
+Cohesion: 0.12
+Nodes (16): 1. Skill Meta, 2.1 Swiss Industrial Print, 2.2 Tactical Telemetry & CRT Terminal, 2. Visual Archetypes, 3.1 Macro-Typography (Structural Headers), 3.2 Micro-Typography (Data & Telemetry), 3.3 Textural Contrast (Artistic Disruption), 3. Typographic Architecture (+8 more)
+
+### Community 56 - "Design System: Taste Standard"
+Cohesion: 0.13
+Nodes (14): 1. Visual Theme & Atmosphere, 2. Color Palette & Roles, 3. Typography Rules, 4. Component Stylings, 5. Hero Section, 6. Layout Principles, 7. Responsive Rules, 8. Motion & Interaction (Code-Phase Intent) (+6 more)
+
+### Community 57 - "CORE DIRECTIVE: AWWWARDS-LEVEL IMAGE ART DIRECTION"
+Cohesion: 0.14
+Nodes (14): 10. SECTION RHYTHM RULE, 12. DENSITY & SPACING DISCIPLINE, 14. IMAGE / MEDIA DIRECTION, 16. MULTI-IMAGE CONSISTENCY RULE, 17. CLARITY CHECK, 19. RESPONSE BEHAVIOR, 1. ACTIVE BASELINE CONFIGURATION, 21. FINAL GOAL (+6 more)
+
+### Community 58 - "2. THE COMBINATORIAL VARIATION ENGINE"
+Cohesion: 0.14
+Nodes (14): 2. THE COMBINATORIAL VARIATION ENGINE, Background Character, Background Mode (per-section), Composition Anchor (per-section), CTA Variation, Hero Architecture, Hero Scale (per-page), Motion-Implied Language (+6 more)
+
+### Community 59 - "4. DESIGN ENGINEERING DIRECTIVES (Bias Correction)"
+Cohesion: 0.17
+Nodes (12): 4.10 Quotes & Testimonials, 4.11 Page Theme Lock (Light / Dark Mode Consistency), 4.1 Typography, 4.2 Color Calibration, 4.3 Layout Diversification, 4.4 Materiality, Shadows, Cards, 4.5 Interactive UI States, 4.6 Data & Form Patterns (+4 more)
+
+### Community 60 - "10. REFERENCE VOCABULARY (Pattern Names the Agent Should Know)"
 Cohesion: 0.20
-Nodes (6): AnomalyEvaluation, Any, Tuple-compatible result that preserves the legacy event-only API., Rigorous tests evaluating live hot-plugged ML artifacts matching Yukti's schema., BUG DISCOVERY: scaler.json contains custom baseline means: T=30.5, RH=62.0,…, TestSyntheticArtifactsHotPlugging
+Nodes (10): 10. REFERENCE VOCABULARY (Pattern Names the Agent Should Know), Animation Library Choice, Cards & Containers, Galleries & Media, Hero Paradigms, Layout & Grids, Micro-Interactions & Effects, Navigation & Menus (+2 more)
 
-### Community 45 - "AnomalyEvent"
+### Community 61 - "tasteskill: Anti-Slop Frontend Skill"
+Cohesion: 0.20
+Nodes (10): 13. OUT OF SCOPE, 14. FINAL PRE-FLIGHT CHECK, 1.A Dial Inference (design read → dial values), 1.B Use-Case Presets, 1.C How the Dials Drive Output, 1. THE THREE DIALS (Core Configuration), 2.A When to reach for a real design system (use official packages), 2.B When the brief is an aesthetic, not a system (+2 more)
+
+### Community 62 - "CORE DIRECTIVE: AWWWARDS-LEVEL DESIGN ENGINEERING"
+Cohesion: 0.20
+Nodes (9): 1. PYTHON-DRIVEN TRUE RANDOMIZATION (BREAKING THE LOOP), 2. AIDA STRUCTURE & SPACING, 3. HERO ARCHITECTURE & THE 2-LINE IRON RULE, 4. THE GAPLESS BENTO GRID, 5. ADVANCED GSAP MOTION & HOVER PHYSICS, 6. COMPONENT ARSENAL & CREATIVITY, 7. CONTENT, ASSETS & STRICT BANS, 8. MANDATORY PRE-FLIGHT <design_plan> (+1 more)
+
+### Community 63 - "22. STYLE VARIATION ENGINE"
+Cohesion: 0.20
+Nodes (10): 22. STYLE VARIATION ENGINE, Decorative Asset Set, Image Art Direction Bias, Motion-Implied Language, Palette Logic, Signature Component Set, Structure Bias, Texture / Surface Treatment (+2 more)
+
+### Community 64 - "Protocol: Premium Utilitarian Minimalism UI Architect"
+Cohesion: 0.20
+Nodes (9): 1. Protocol Overview, 2. Absolute Negative Constraints (Banned Elements), 3. Typographic Architecture, 4. Color Palette (Warm Monochrome + Spot Pastels), 5. Component Specifications, 6. Iconography & Imagery Directives, 7. Subtle Motion & Micro-Animations, 8. Execution Protocol (+1 more)
+
+### Community 65 - "11. COMPONENT EXECUTION GUIDELINES"
+Cohesion: 0.22
+Nodes (9): 11. COMPONENT EXECUTION GUIDELINES, 3D Cascading Card Deck, Diagonal Staggered Square Masonry, Hover-Accordion Slice Layout, Off-Grid Editorial Layout, Pristine Gapless Bento Grid, Product UI Panel Stack, Turning Polaroid Arc (+1 more)
+
+### Community 66 - "18. EXTRA CREATIVITY & IMPLEMENTATION EDGE"
+Cohesion: 0.22
+Nodes (9): 18. EXTRA CREATIVITY & IMPLEMENTATION EDGE, Composition variety check, Conversion focus, Cross-section contrast, CTA specificity, Cultural / tonal alignment, Data-viz restraint, Image variety inside one comp (+1 more)
+
+### Community 67 - "9. AI TELLS (Forbidden Patterns)"
+Cohesion: 0.25
+Nodes (8): 9.A Visual & CSS, 9. AI TELLS (Forbidden Patterns), 9.B Typography, 9.C Layout & Spacing, 9.D Content & Data ("Jane Doe" Effect), 9.E External Resources & Components, 9.F Production-Test Tells (banned outright), 9.G EM-DASH BAN (the single most-violated Tell)
+
+### Community 68 - "12. THE COMBINATORIAL VARIATION ENGINE"
+Cohesion: 0.25
+Nodes (8): 12. THE COMBINATORIAL VARIATION ENGINE, Background Character, Hero Architecture, Motion-Implied Language, Section System, Signature Component Set, Theme Paradigm, Typography Character
+
+### Community 69 - "8. ANTI-AI-SLOP RULES"
+Cohesion: 0.25
+Nodes (8): 8. ANTI-AI-SLOP RULES, Carousel / marquee slop (layout), Content slop, Data / KPI slop, Density slop, Layout slop, Typography slop, Visual slop
+
+### Community 70 - "11. REDESIGN PROTOCOL"
+Cohesion: 0.29
+Nodes (7): 11.A Detect the Mode (first action), 11.B Audit Before Touching, 11.C Preservation Rules, 11.D Modernisation Levers (priority order), 11.E Decision Tree: Targeted Evolution vs Full Redesign, 11.F What Never Changes Silently, 11. REDESIGN PROTOCOL
+
+### Community 71 - "3. DEFAULT ARCHITECTURE & CONVENTIONS"
+Cohesion: 0.29
+Nodes (7): 3.A Stack, 3.B State, 3.C Icons, 3.D Emoji Policy, 3. DEFAULT ARCHITECTURE & CONVENTIONS, 3.E Responsiveness & Layout Mechanics, 3.F Dependency Verification (mandatory)
+
+### Community 72 - "6. PERFORMANCE & ACCESSIBILITY GUARDRAILS"
+Cohesion: 0.29
+Nodes (7): 6.A Hardware Acceleration, 6.B Reduced Motion (mandatory), 6.C Dark Mode (mandatory for any consumer-facing page), 6.D Core Web Vitals Targets, 6.E DOM Cost, 6.F Z-Index Restraint, 6. PERFORMANCE & ACCESSIBILITY GUARDRAILS
+
+### Community 73 - "Full-Output Enforcement"
+Cohesion: 0.29
+Nodes (6): Banned Output Patterns, Baseline, Execution Process, Full-Output Enforcement, Handling Long Outputs, Quick Check
+
+### Community 74 - "33. CATEGORY-SPECIFIC BIAS"
+Cohesion: 0.29
+Nodes (7): 33. CATEGORY-SPECIFIC BIAS, Commerce, Fintech, Health / Fitness, Productivity, Social, Wellness / Lifestyle
+
+### Community 75 - "13. COLOR & MATERIAL RULES"
+Cohesion: 0.29
+Nodes (7): 13. COLOR & MATERIAL RULES, Background Confidence Rule, Background-image harmony, Gradient Discipline, Materiality, Palette Discipline, Strong guidance
+
+### Community 76 - "4. HERO MINIMALISM RULES"
+Cohesion: 0.29
+Nodes (7): 4. HERO MINIMALISM RULES, Absolute Hero Rules, Graphic Restraint, Headline Rule, Hero Composition Bias, Pre-output check, Typography Execution
+
+### Community 77 - "TestCorruptedArtifactsHandling"
+Cohesion: 0.29
+Nodes (3): Verifies that corrupted model files are caught gracefully and do not break…, If scaler.json is corrupted or invalid, anomaly_detector.py gracefully falls…, TestCorruptedArtifactsHandling
+
+### Community 78 - "29. ANTI-AI-SLOP RULES"
 Cohesion: 0.33
-Nodes (5): AnomalyEvent, ShapAttribution, _epoch(), Sensor health: predictive maintenance + imputation, run once per packet from…, weather_event: pass the confluence engine's answer once it exists. Left as…
+Nodes (6): 29. ANTI-AI-SLOP RULES, Content slop, Density slop, Layout slop, Typography slop, Visual slop
 
-### Community 46 - ".analyze_window"
-Cohesion: 0.36
-Nodes (5): Any, Comprehensive multi-scale analysis over the current rolling telemetry window.…, Safely extracts a float field from a Pydantic model or dictionary., Computes numerical first derivatives (dT/dt, dP/dt, dRH/dt) and second…, Computes Pearson correlation coefficient rho_{T, RH} across the sliding window.…
+### Community 79 - "5. IMAGE COUNT & PAGE SLICING"
+Cohesion: 0.33
+Nodes (6): 5. IMAGE COUNT & PAGE SLICING, Continuity Rule, Counting rule, Format, Section size variety, THIS IS THE PRIMARY OUTPUT RULE
+
+### Community 80 - "0. BRIEF INFERENCE (Read the Room Before Anything Else)"
+Cohesion: 0.40
+Nodes (5): 0.A Read these signals first, 0.B Output a one-line "Design Read" before generating, 0. BRIEF INFERENCE (Read the Room Before Anything Else), 0.C If the brief is ambiguous, ask one question, do not guess, 0.D Anti-Default Discipline
+
+### Community 81 - "12. THE BLOCK LIBRARY (Contract - Implementations Land Here Iteratively)"
+Cohesion: 0.40
+Nodes (5): 12.A File Location, 12.B Required Frontmatter, 12.C Required Body Sections, 12.D Block-Library Discipline, 12. THE BLOCK LIBRARY (Contract - Implementations Land Here Iteratively)
+
+### Community 82 - "5. CONTEXT-AWARE PROACTIVITY"
+Cohesion: 0.40
+Nodes (5): 5.A Sticky-Stack - Canonical Skeleton, 5.B Horizontal-Pan - Canonical Skeleton, 5.C Scroll-Reveal Stagger - Canonical Skeleton (lighter alternative), 5. CONTEXT-AWARE PROACTIVITY, 5.D Forbidden Animation Patterns
+
+### Community 83 - "8. DARK MODE PROTOCOL"
+Cohesion: 0.40
+Nodes (5): 8.A Token Strategy (pick one, stick to it), 8.B Do Not Prescribe Specific Colors Here, 8.C Default Mode, 8.D Test in Both Modes Before Finishing, 8. DARK MODE PROTOCOL
+
+### Community 84 - "21. MOBILE ANTI-AI-TELLS RULE"
+Cohesion: 0.40
+Nodes (5): 21. MOBILE ANTI-AI-TELLS RULE, Copy AI tells, Layout AI tells, UI clutter tells, Visual AI tells
+
+### Community 85 - "7. DIAL DEFINITIONS (Technical Reference)"
+Cohesion: 0.50
+Nodes (4): 7. DIAL DEFINITIONS (Technical Reference), DESIGN_VARIANCE (Level 1-10), MOTION_INTENSITY (Level 1-10), VISUAL_DENSITY (Level 1-10)
+
+### Community 86 - "33. DEFAULT SECTION PACKS"
+Cohesion: 0.50
+Nodes (4): 12-section pack, 33. DEFAULT SECTION PACKS, 4-section pack, 8-section pack
+
+### Community 87 - "14. HERO MINIMALISM RULES"
+Cohesion: 0.50
+Nodes (4): 14. HERO MINIMALISM RULES, Absolute Hero Rules, Headline Rule, Hero Cleanliness Rule
+
+### Community 88 - "37. EXAMPLE INTERPRETATIONS"
+Cohesion: 0.50
+Nodes (4): 37. EXAMPLE INTERPRETATIONS, Example 1, Example 2, Example 3
+
+### Community 89 - "2. PLATFORM MODE RULE"
+Cohesion: 0.50
+Nodes (4): 2. PLATFORM MODE RULE, Android-native premium, Cross-platform premium neutral, iOS-native premium
+
+### Community 90 - "37. EXAMPLE INTERPRETATIONS"
+Cohesion: 0.50
+Nodes (4): 37. EXAMPLE INTERPRETATIONS, Example 1, Example 2, Example 3
+
+### Community 91 - "15. DEFAULT SITE PACKS"
+Cohesion: 0.50
+Nodes (4): 12-section pack, 15. DEFAULT SITE PACKS, 4-section pack, 8-section pack
+
+### Community 92 - "20. EXAMPLE INTERPRETATIONS"
+Cohesion: 0.50
+Nodes (4): 20. EXAMPLE INTERPRETATIONS, Example 1, Example 2, Example 3
+
+### Community 93 - "MultiScaleAnalyzer"
+Cohesion: 0.08
+Nodes (19): MultiScaleAnalyzer, Any, Layer 2.1: Multi-Scale Multivariate Physical Analyzer (PRD Section 5.3 /…, Comprehensive multi-scale analysis over the current rolling telemetry window.…, Safely extracts a float field from a Pydantic model or dictionary., Computes numerical first derivatives (dT/dt, dP/dt, dRH/dt) and second…, Computes Pearson correlation coefficient rho_{T, RH} across the sliding window.…, Task 1.3: Verify isolated Multi-Scale Multivariate Analyzer functionality. (+11 more)
+
+### Community 97 - "ingest_telemetry_packet"
+Cohesion: 0.67
+Nodes (3): ingest_telemetry_packet(), post, Direct ingestion endpoint for external edge devices / edge_runner.py scripts.…
+
+### Community 100 - "AnomalyEvaluation"
+Cohesion: 0.50
+Nodes (3): AnomalyEvaluation, Any, Tuple-compatible result that preserves the legacy event-only API.
 
 ## Knowledge Gaps
-- **198 isolated node(s):** `nextConfig`, `name`, `version`, `private`, `dev` (+193 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 475 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **638 isolated node(s):** `Colors`, `nextConfig`, `name`, `version`, `private` (+633 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 943 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `init_db()` connect `test_qa_backend_math_edge_cases.py` to `test_qa_edge_telemetry_stress.py`, `4. Member Task Details`?**
-  _High betweenness centrality (0.168) - this node is a cross-community bridge._
-- **Why does `Tasks:` connect `4. Member Task Details` to `test_qa_backend_math_edge_cases.py`?**
-  _High betweenness centrality (0.156) - this node is a cross-community bridge._
-- **Are the 17 inferred relationships involving `TelemetryPayload` (e.g. with `InMemoryStore` and `MultivariateAnomalyDetector`) actually correct?**
-  _`TelemetryPayload` has 17 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 5 inferred relationships involving `ConfluenceEngine` (e.g. with `TestConfluenceEngineEdgeCases` and `TestConfluenceConfidenceAndDecisionMatrix`) actually correct?**
-  _`ConfluenceEngine` has 5 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 4 inferred relationships involving `InMemoryStore` (e.g. with `AnomalyEvent` and `OperatorFeedback`) actually correct?**
-  _`InMemoryStore` has 4 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `nextConfig`, `name`, `version` to the rest of the system?**
-  _198 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `init_db()` connect `db.py` to `test_qa_edge_telemetry_stress.py`, `store.py`, `test_qa_backend_math_edge_cases.py`, `4. Member Task Details`, `test_e2e_pipeline.py`?**
+  _High betweenness centrality (0.085) - this node is a cross-community bridge._
+- **Why does `Tasks:` connect `4. Member Task Details` to `db.py`?**
+  _High betweenness centrality (0.082) - this node is a cross-community bridge._
+- **Are the 18 inferred relationships involving `TelemetryPayload` (e.g. with `InMemoryStore` and `ingest_telemetry_packet()`) actually correct?**
+  _`TelemetryPayload` has 18 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `Colors`, `nextConfig`, `name` to the rest of the system?**
+  _638 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `useTelemetryStore` be split into smaller, more focused modules?**
   _Cohesion score 0.07056936647955092 - nodes in this community are weakly interconnected._
+- **Should `db.py` be split into smaller, more focused modules?**
+  _Cohesion score 0.06721311475409836 - nodes in this community are weakly interconnected._
+- **Should `Detailed Minute-by-Minute Demo Script` be split into smaller, more focused modules?**
+  _Cohesion score 0.125 - nodes in this community are weakly interconnected._

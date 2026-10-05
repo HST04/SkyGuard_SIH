@@ -8,7 +8,8 @@ import { Shield, Radio, Activity, Play, Sparkles, Terminal } from 'lucide-react'
 
 export function Header() {
   const pathname = usePathname();
-  const { connectionStatus, activeFault, pitchScriptStatus, stationStatus } = useTelemetryStore();
+  const { connectionStatus, latestTelemetry, stationStatus } = useTelemetryStore();
+  const isStreaming = latestTelemetry !== null;
 
   return (
     <header className="h-16 border-b border-white/10 glass-panel sticky top-0 z-40 px-5 flex items-center justify-between">
@@ -25,13 +26,13 @@ export function Header() {
               <span>SkyGuard</span>
               <span className="text-cyan-400">AI</span>
               <span className="text-[10px] font-sans px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                MVP v1.0
+                PROTOTYPE
               </span>
             </div>
-            <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
+            <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5">
               <span>Station: <strong>AGRA-01</strong></span>
               <span className="text-slate-600">•</span>
-              <span className="text-slate-400">IMD Physics + 1D-CNN</span>
+              <span className="text-slate-400">Central Observatory</span>
             </div>
           </div>
         </Link>
@@ -39,17 +40,22 @@ export function Header() {
 
       {/* Middle Status Indicator */}
       <div className="hidden md:flex items-center gap-3">
-        {pitchScriptStatus && pitchScriptStatus.active && (
-          <div className="glass-pill px-3 py-1 rounded-full border border-indigo-500/40 text-xs font-mono text-indigo-300 flex items-center gap-2 animate-pulse">
-            <Play className="w-3 h-3 text-indigo-400 fill-indigo-400" />
-            <span>Pitch Script Active: <strong>{pitchScriptStatus.phase_title}</strong></span>
+        {stationStatus === 'anomaly' && (
+          <div className="glass-pill px-3 py-1 rounded-full border border-rose-500/50 bg-rose-950/30 text-xs font-mono text-rose-300 flex items-center gap-2 animate-pulse shadow-glow-rose">
+            <Activity className="w-3.5 h-3.5 text-rose-400" />
+            <span>INCIDENT ACTIVE • Operator Action Required</span>
           </div>
         )}
-
-        {activeFault !== 'normal' && !pitchScriptStatus?.active && (
-          <div className="glass-pill px-3 py-1 rounded-full border border-rose-500/40 text-xs font-mono text-rose-300 flex items-center gap-2">
-            <Activity className="w-3 h-3 text-rose-400 animate-bounce" />
-            <span>Injected Fault: <strong className="uppercase">{activeFault.replace('_', ' ')}</strong></span>
+        {stationStatus === 'normal' && isStreaming && (
+          <div className="glass-pill px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-950/20 text-xs font-mono text-emerald-300 flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>Station Nominal • Zero False Alarm Shield Active</span>
+          </div>
+        )}
+        {!isStreaming && (
+          <div className="glass-pill px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-950/20 text-xs font-mono text-cyan-300 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+            <span>STANDBY • Ready for Edge CSV Playback</span>
           </div>
         )}
       </div>
@@ -57,18 +63,16 @@ export function Header() {
       {/* Right Controls: Live SSE pill & Link to Virtual Edge Simulator */}
       <div className="flex items-center gap-3">
         {/* SSE Status Pill */}
-        <div className="glass-pill px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-mono border border-white/10">
+        <div className="glass-pill px-3.5 py-1.5 rounded-full flex items-center gap-2 text-xs font-mono border border-white/10">
           <div
             className={`w-2 h-2 rounded-full ${
-              connectionStatus === 'connected'
+              isStreaming
                 ? 'bg-emerald-400 shadow-glow-emerald animate-pulse'
-                : connectionStatus === 'connecting'
-                ? 'bg-amber-400 animate-ping'
-                : 'bg-rose-500'
+                : 'bg-cyan-400 animate-pulse'
             }`}
           />
-          <span className="text-slate-300 text-[11px]">
-            {connectionStatus === 'connected' ? 'LIVE 1 Hz SSE' : connectionStatus.toUpperCase()}
+          <span className="text-slate-300 text-[11px] tabular-nums font-mono">
+            {isStreaming ? `LIVE 1 Hz SSE #${latestTelemetry?.sequence}` : 'STANDBY (AWAITING STREAM)'}
           </span>
         </div>
 

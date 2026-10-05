@@ -14,7 +14,8 @@ interface WeatherStation3DProps {
 }
 
 export function WeatherStation3D({ isExpanded, onToggleExpand }: WeatherStation3DProps) {
-  const { stationStatus, selectedSensor, setSelectedSensor, anomalies } = useTelemetryStore();
+  const { stationStatus, selectedSensor, setSelectedSensor, anomalies, latestTelemetry } = useTelemetryStore();
+  const isStandby = !latestTelemetry;
 
   const openAnomalies = anomalies.filter((a) => a.status === 'open');
 
@@ -32,6 +33,8 @@ export function WeatherStation3D({ isExpanded, onToggleExpand }: WeatherStation3
                 ? 'bg-rose-500 shadow-glow-rose animate-ping'
                 : stationStatus === 'warning'
                 ? 'bg-amber-400 shadow-glow-amber animate-pulse'
+                : isStandby
+                ? 'bg-amber-400 shadow-glow-amber animate-pulse'
                 : 'bg-emerald-400 shadow-glow-emerald'
             }`}
           />
@@ -46,10 +49,12 @@ export function WeatherStation3D({ isExpanded, onToggleExpand }: WeatherStation3
                     ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
                     : stationStatus === 'warning'
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                    : isStandby
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                 }`}
               >
-                {stationStatus.toUpperCase()}
+                {isStandby ? 'STANDBY' : stationStatus.toUpperCase()}
               </span>
             </div>
             <div className="text-[11px] text-slate-400 font-mono">

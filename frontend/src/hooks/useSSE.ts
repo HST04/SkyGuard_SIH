@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useTelemetryStore } from '@/stores/telemetryStore';
 import { api } from '@/lib/api';
-import { TelemetryPayload, AnomalyEvent } from '@/lib/types';
+import { TelemetryPayload, AnomalyEvent, DecisionRecord } from '@/lib/types';
 
 const STREAM_URL = process.env.NEXT_PUBLIC_STREAM_URL || 'http://localhost:8000/api/v1/telemetry/stream';
 
@@ -12,6 +12,8 @@ export function useSSE(stationId = 'AGRA-01') {
     setLatestTelemetry,
     setTelemetryHistory,
     addAnomaly,
+    addDecision,
+    setDecisions,
     setConnectionStatus,
     setSimulatorState,
     markImputationAccepted,
@@ -27,10 +29,11 @@ export function useSSE(stationId = 'AGRA-01') {
     // 1. Initial REST Hydration
     async function hydrate() {
       try {
-        const [history, anomaliesList, simStatus] = await Promise.all([
+        const [history, anomaliesList, simStatus, decisionsList] = await Promise.all([
           api.getTelemetryHistory(stationId, 60),
           api.getAnomalies('open', 10),
           api.getSimulatorStatus(),
+          api.getDecisions(stationId, 50),
         ]);
 
         if (!isMounted) return;
@@ -42,6 +45,10 @@ export function useSSE(stationId = 'AGRA-01') {
 
         if (anomaliesList.length > 0) {
           anomaliesList.forEach((ano) => addAnomaly(ano));
+        }
+
+        if (decisionsList && decisionsList.length > 0) {
+          setDecisions(decisionsList);
         }
 
         if (simStatus) {
@@ -96,6 +103,17 @@ export function useSSE(stationId = 'AGRA-01') {
       es.addEventListener('imputation_accepted', () => {
         if (!isMounted) return;
         markImputationAccepted(true);
+      });
+
+      // Listen for decision events
+      es.addEventListener('decision_event', (event: MessageEvent) => {
+        if (!isMounted) return;
+        try {
+          const decision: DecisionRecord = JSON.parse(event.data);
+          addDecision(decision);
+        } catch (e) {
+          console.error('[SSE] Failed to parse decision event:', e);
+        }
       });
 
       // Listen for heartbeats

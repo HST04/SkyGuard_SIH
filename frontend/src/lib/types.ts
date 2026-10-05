@@ -1,5 +1,5 @@
 export type AnomalyType = 'rule_flag' | 'ai_anomaly' | 'compound' | 'sensor_health';
-export type AnomalyStatus = 'open' | 'acknowledged' | 'resolved' | 'false_alarm';
+export type AnomalyStatus = 'open' | 'acknowledged' | 'resolved' | 'ignored' | 'false_alarm';
 
 export interface ShapAttribution {
   feature: string;
@@ -15,6 +15,13 @@ export type ConfluenceClassification =
   | 'Uncertain Anomaly'
   | 'Nominal Baseline';
 
+export interface AgentTurnLog {
+  sender: string;
+  role: 'model_a' | 'model_b' | 'arbiter';
+  message: string;
+  timestamp: string;
+}
+
 export interface ConfluenceResult {
   classification: ConfluenceClassification;
   confidence: number; // 0.0 - 1.0 (or percentage e.g. 92.4%)
@@ -28,6 +35,8 @@ export interface ConfluenceResult {
   action_taken?: string;
   severity?: string;
   operator_alert?: boolean;
+  api_fallback?: boolean;
+  agent_dialogue?: AgentTurnLog[];
 }
 
 export type MaintenanceHealthStatus =
@@ -88,6 +97,7 @@ export interface TelemetryPayload {
   sequence: number;
   source: string;
   drop_flag: number;
+  fault_type?: string;
   reconstruction_error: number;
   inference_time_ms: number;
   live_attributions: ShapAttribution[];
@@ -104,11 +114,56 @@ export interface TelemetryPayload {
   };
 }
 
+export interface TransmittedSensorReadings {
+  temperature_c: number;
+  humidity_pct: number;
+  pressure_hpa: number;
+  wind_speed_ms: number;
+  wind_dir_deg: number;
+  solar_radiation_wm2: number;
+  dew_point_c: number;
+}
+
+export interface TransmittedDataSnapshot {
+  transmission_type?: string;
+  station_id?: string;
+  sequence?: number;
+  timestamp?: string;
+  source?: string;
+  fault_type_flag?: string;
+  sensor_readings?: TransmittedSensorReadings;
+  culprit_sensor?: string;
+  culprit_sensors?: string[];
+  reported_value?: number;
+  expected_baseline?: number;
+  deviation_delta?: number;
+  unit?: string;
+}
+
+export interface DecisionReasoningSnapshot {
+  verdict?: string;
+  classification?: string;
+  defect_class?: string;
+  confidence_score?: number;
+  reconstruction_error?: number;
+  error_threshold?: number;
+  gatekeeper_outlier_prob?: number;
+  p_weather?: number;
+  p_sensor?: number;
+  why_decision?: string;
+  physics_inconsistency?: string;
+  summary?: string;
+  scientific_rationale?: string;
+  model_evaluations?: Record<string, any>;
+  feature_attributions?: ShapAttribution[];
+}
+
 export interface AnomalyEvent {
   anomaly_id: string;
   detected_at: string;
   station_id: string;
   anomaly_type: AnomalyType;
+  classification?: ConfluenceClassification | string;
   severity_score: number;
   culprit_sensors: string[];
   diagnostic_message: string;
@@ -116,8 +171,15 @@ export interface AnomalyEvent {
   status: AnomalyStatus;
   resolution_note?: string | null;
   resolved_at?: string | null;
+  acknowledged_at?: string | null;
+  ignored_at?: string | null;
+  action_taken?: string | null;
+  action_timestamp?: string | null;
   reconstruction_error: number;
   confluence?: ConfluenceResult;
+  transmitted_data?: TransmittedDataSnapshot | null;
+  decision_reasoning?: DecisionReasoningSnapshot | null;
+  summary?: string | null;
 }
 
 export interface OperatorFeedback {
@@ -166,4 +228,26 @@ export interface PitchScriptStatus {
   elapsed_seconds: number;
   total_seconds: number;
   expected_status: string;
+}
+
+export interface DecisionRecord {
+  decision_id: string;
+  station_id: string;
+  timestamp: string;
+  classification: ConfluenceClassification;
+  confidence_score: number;
+  trigger_reason: string;
+  culprit_sensors: string[];
+  action_recommended: string;
+  dialogue: AgentTurnLog[];
+  reconstruction_error: number;
+  transmitted_data?: TransmittedDataSnapshot | null;
+  decision_reasoning?: DecisionReasoningSnapshot | null;
+  summary?: string | null;
+}
+
+export interface DecisionListResponse {
+  status: string;
+  total: number;
+  decisions: DecisionRecord[];
 }

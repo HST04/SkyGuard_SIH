@@ -1,37 +1,28 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 from typing import List
+import os
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "SkyGuard AI - AWS Anomaly Detection Engine"
-    API_V1_STR: str = "/api/v1"
-    STATION_ID: str = "AGRA-01"
-    STATION_NAME: str = "Agra Central Agro-Met Station"
-    LATITUDE: float = 27.1767
-    LONGITUDE: float = 78.0081
-    ELEVATION_M: float = 169.0
+    PROJECT_NAME: str = "SkyGuard AI Backend"
+    VERSION: str = "3.0.0"
+    DEFAULT_STATION_ID: str = "AGRA-01"
+    DATABASE_PATH: str = "skyguard.db"
     
-    # Ingestion & Windowing
-    SAMPLING_INTERVAL_SEC: float = 1.0
-    WINDOW_SIZE: int = 12
-    RECONSTRUCTION_THRESHOLD: float = 0.095
-
-    # External MQTT edge ingestion. Disabled by default so the local simulator remains
-    # the zero-setup development path.
-    MQTT_ENABLED: bool = False
-    MQTT_BROKER_HOST: str = "localhost"
-    MQTT_BROKER_PORT: int = 1883
-    MQTT_TOPIC: str = "skyguard/telemetry"
-    MQTT_CLIENT_ID: str = "skyguard-backend"
-    MQTT_QOS: int = 1
+    # OpenRouter API configurations
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_MODEL: str = "anthropic/claude-3.5-sonnet"
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     
-    # CORS
+    # CORS Configuration
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "*"
+        "http://localhost:8000",
+        "http://127.0.0.1:8000"
     ]
-
-    model_config = SettingsConfigDict(case_sensitive=True, extra="ignore")
+    
+    class Config:
+        env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()

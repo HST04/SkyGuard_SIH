@@ -6,6 +6,8 @@ import {
   OperatorFeedback,
   PitchScriptStatus,
   ImputationAcceptRequest,
+  DecisionRecord,
+  DecisionListResponse,
 } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
@@ -114,6 +116,43 @@ export const api = {
     }
   },
 
+  async bulkActionAnomalies(
+    stationId = 'AGRA-01',
+    status: 'resolved' | 'acknowledged' | 'ignored' = 'resolved',
+    note?: string
+  ): Promise<{ status: string; count: number } | null> {
+    try {
+      const q = `?station_id=${encodeURIComponent(stationId)}&status=${encodeURIComponent(status)}${note ? `&note=${encodeURIComponent(note)}` : ''}`;
+      return await fetchJson<{ status: string; count: number }>(
+        `${API_BASE}/anomalies/bulk-action${q}`,
+        { method: 'POST' }
+      );
+    } catch {
+      return null;
+    }
+  },
+
+  async resolveAllAnomalies(stationId = 'AGRA-01'): Promise<{ status: string; resolved_count: number } | null> {
+    try {
+      return await fetchJson<{ status: string; resolved_count: number }>(
+        `${API_BASE}/anomalies/resolve-all?station_id=${stationId}`,
+        { method: 'POST' }
+      );
+    } catch {
+      return null;
+    }
+  },
+
+  async resetSystem(): Promise<{ status: string; message: string } | null> {
+    try {
+      return await fetchJson<{ status: string; message: string }>(`${API_BASE}/system/reset`, {
+        method: 'POST',
+      });
+    } catch {
+      return null;
+    }
+  },
+
   // Simulator & Faults
   async injectFault(faultType: string, intensity = 1.0, durationSeconds = 30) {
     try {
@@ -182,5 +221,22 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(req),
     });
+  },
+
+  // Decision Audit Trail
+  async getDecisions(
+    stationId = 'AGRA-01',
+    limit = 50,
+    classification?: string
+  ): Promise<DecisionRecord[]> {
+    try {
+      const q = classification ? `&classification=${encodeURIComponent(classification)}` : '';
+      const res = await fetchJson<DecisionListResponse>(
+        `${API_BASE}/decisions?station_id=${stationId}&limit=${limit}${q}`
+      );
+      return res.decisions || [];
+    } catch {
+      return [];
+    }
   },
 };

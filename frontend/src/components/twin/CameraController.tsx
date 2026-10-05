@@ -5,7 +5,7 @@ import { useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { useTelemetryStore } from '@/stores/telemetryStore';
+import { useTelemetryStore, normalizeSensorId } from '@/stores/telemetryStore';
 
 interface CameraTarget {
   position: THREE.Vector3;
@@ -50,7 +50,8 @@ export function CameraController() {
   const targetLookAt = useRef(new THREE.Vector3().copy(TARGETS.station.target));
 
   useEffect(() => {
-    const config = TARGETS[selectedSensor] || TARGETS.station;
+    const normKey = normalizeSensorId(selectedSensor);
+    const config = TARGETS[normKey] || TARGETS.station;
     targetCamPos.current.copy(config.position);
     targetLookAt.current.copy(config.target);
     isTransitioning.current = true;

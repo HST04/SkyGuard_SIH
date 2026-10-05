@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useTelemetryStore } from '@/stores/telemetryStore';
+import { useTelemetryStore, normalizeSensorId, matchSensor } from '@/stores/telemetryStore';
 import { Thermometer, Droplets, Gauge, Wind, Sun, CloudRain } from 'lucide-react';
 
 export function TelemetryPanel() {
@@ -90,13 +90,16 @@ export function TelemetryPanel() {
 
   const renderCard = (metric: typeof metrics[0]) => {
     const Icon = metric.icon;
-    const isSelected = selectedSensor === metric.id;
-    const isCulprit = openAnomalies.some((a) => a.culprit_sensors && a.culprit_sensors.includes(metric.id));
+    const normMetricId = normalizeSensorId(metric.id);
+    const isSelected = normalizeSensorId(selectedSensor) === normMetricId;
+    const isCulprit = openAnomalies.some(
+      (a) => a.culprit_sensors && a.culprit_sensors.some((c) => matchSensor(c, normMetricId))
+    );
 
     return (
       <div
         key={metric.id}
-        onClick={() => setSelectedSensor(metric.id === selectedSensor ? 'station' : metric.id)}
+        onClick={() => setSelectedSensor(isSelected ? 'station' : normMetricId)}
         className={`cursor-pointer rounded-xl p-2.5 border transition-all ${
           isCulprit
             ? 'bg-rose-950/40 border-rose-500/60 shadow-glow-rose'
